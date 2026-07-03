@@ -189,7 +189,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.5</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.6</div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -294,7 +294,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
       </div>
       <div style="overflow-x:auto">
         <table class="cfg-t">
-          <thead><tr><th class="thp">Turno</th><th class="thh">Acción</th></tr></thead>
+          <thead><tr><th class="thp">Turno</th><th class="thh">Horas</th><th class="thh">Acción</th></tr></thead>
           <tbody id="turnos-body"></tbody>
         </table>
       </div>
@@ -838,7 +838,7 @@ function renderTurnosList(){
   SOPTS.forEach(o=>{
     if(o.v==="")return;
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="tdp">${o.l}</td><td class="tdh"><button class="delbtn" onclick="removeTurno('${o.v}')">Eliminar</button></td>`;
+    tr.innerHTML=`<td class="tdp">${o.l}</td><td class="tdh">${shHours(o.v)}h</td><td class="tdh"><button class="delbtn" onclick="removeTurno('${o.v}')">Eliminar</button></td>`;
     body.appendChild(tr);
   });
 }
