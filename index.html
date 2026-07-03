@@ -182,7 +182,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.1</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.2</div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -639,8 +639,8 @@ function fillCfgBody(){
     for(let d=0;d<=6;d++){
       const td=document.createElement("td");
       const s=document.createElement("select");s.id=`c-${p}-${d}`;s.className="csel";
-      SOPTS.forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.l;s.appendChild(op);});
-      s.value=sch[p][d]||"";sStyle(s);s.onchange=()=>{sStyle(s);updH(p);};
+      populateSelect(s,sch[p][d]||"");
+      s.onchange=()=>onSelChange(s,p);
       td.appendChild(s);tr.appendChild(td);
     }
     const tdH=document.createElement("td");tdH.className="tdh";tdH.id=`ch-${p}`;tr.appendChild(tdH);
@@ -659,6 +659,34 @@ function openCfg(){
 }
 function cfgPrevWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()-7);fillCfgBody();}
 function cfgNextWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()+7);fillCfgBody();}
+function populateSelect(s,value){
+  s.innerHTML="";
+  SOPTS.forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.l;s.appendChild(op);});
+  const custom=document.createElement("option");custom.value="__custom__";custom.textContent="+ Crear turno...";s.appendChild(custom);
+  s.value=value;
+  if(s.value!==value)s.value=""; // por si el valor no está en la lista (no debería pasar)
+  sStyle(s);
+}
+function onSelChange(s,person){
+  if(s.value==="__custom__"){
+    const txt=prompt("Ingresá el turno en formato HH-HH (24 hs), por ejemplo 10-18:");
+    if(txt===null){s.value="";sStyle(s);updH(person);return;}
+    const m=txt.trim().match(/^(\d{1,2})\s*-\s*(\d{1,2})$/);
+    const a=m?parseInt(m[1],10):NaN, b=m?parseInt(m[2],10):NaN;
+    if(!m||isNaN(a)||isNaN(b)||a<0||a>23||b<=a||b>24){
+      alert("Formato inválido. Usá HH-HH con horas de 0 a 24 y fin mayor que inicio (ej: 10-18).");
+      s.value="";sStyle(s);updH(person);return;
+    }
+    const v=`${a}-${b}`;
+    if(!SOPTS.find(o=>o.v===v)){
+      SOPTS.push({v,l:`${pad(a)}:00-${pad(b)}:00`});
+      SOPTS.sort((x,y)=>{if(x.v==="")return-1;if(y.v==="")return 1;return parseInt(x.v)-parseInt(y.v);});
+    }
+    document.querySelectorAll(".csel").forEach(sel=>{if(sel!==s)populateSelect(sel,sel.value);});
+    populateSelect(s,v);
+  }
+  sStyle(s);updH(person);
+}
 function sStyle(s){s.className="csel "+(s.value?"iss":"isf");}
 function updH(person){
   let tot=0;
