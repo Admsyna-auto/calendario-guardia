@@ -188,7 +188,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.3</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.4</div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -325,8 +325,8 @@ const COLORS={
   Martina:["FAC775","633806"],
   Victoria:["CECBF6","3C3489"],
 };
-const SOPTS_BASE=[
-  {v:"",l:"— Franco"},{v:"8-14",l:"08:00-14:00"},{v:"8-17",l:"08:00-17:00"},
+const SOPTS_SEED=[
+  {v:"8-14",l:"08:00-14:00"},{v:"8-17",l:"08:00-17:00"},
   {v:"9-17",l:"09:00-17:00"},{v:"9-18",l:"09:00-18:00"},{v:"9-19",l:"09:00-19:00"},
   {v:"10-18",l:"10:00-18:00"},{v:"10-19",l:"10:00-19:00"},{v:"10-20",l:"10:00-20:00"},
   {v:"11-20",l:"11:00-20:00"},{v:"12-21",l:"12:00-21:00"},{v:"12-22",l:"12:00-22:00"},
@@ -334,9 +334,9 @@ const SOPTS_BASE=[
   {v:"14-22",l:"14:00-22:00"},{v:"15-22",l:"15:00-22:00"},
 ];
 let CUSTOM_TURNOS=[];
-let SOPTS=SOPTS_BASE.slice();
+let SOPTS=[{v:"",l:"— Franco"}].concat(SOPTS_SEED);
 function rebuildSOPTS(){
-  SOPTS=SOPTS_BASE.concat(CUSTOM_TURNOS.filter(c=>!SOPTS_BASE.find(b=>b.v===c.v)))
+  SOPTS=[{v:"",l:"— Franco"}].concat(CUSTOM_TURNOS)
     .sort((x,y)=>{if(x.v==="")return-1;if(y.v==="")return 1;return parseInt(x.v)-parseInt(y.v);});
 }
 
@@ -413,8 +413,16 @@ function loadCfg(){
 }
 
 /* ── CARGA DE TURNOS PERSONALIZADOS (Firestore, tiempo real) ── */
+let turnosSeeded=false;
 function loadTurnos(){
   turnosCol.onSnapshot(snap=>{
+    if(snap.empty&&!turnosSeeded){
+      turnosSeeded=true;
+      const batch=db.batch();
+      SOPTS_SEED.forEach(o=>batch.set(turnosCol.doc(o.v),o));
+      batch.commit().catch(err=>console.error("No se pudo sembrar turnos:",err));
+      return;
+    }
     CUSTOM_TURNOS=[];
     snap.forEach(doc=>CUSTOM_TURNOS.push(doc.data()));
     rebuildSOPTS();
@@ -827,9 +835,8 @@ function renderTurnosList(){
   const body=document.getElementById("turnos-body");body.innerHTML="";
   SOPTS.forEach(o=>{
     if(o.v==="")return;
-    const isBase=!!SOPTS_BASE.find(b=>b.v===o.v);
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="tdp">${o.l}</td><td class="tdh">${isBase?"":`<button class="delbtn" onclick="removeTurno('${o.v}')">Eliminar</button>`}</td>`;
+    tr.innerHTML=`<td class="tdp">${o.l}</td><td class="tdh"><button class="delbtn" onclick="removeTurno('${o.v}')">Eliminar</button></td>`;
     body.appendChild(tr);
   });
 }
