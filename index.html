@@ -132,6 +132,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .turnos-new{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;background:#F8FAFB;border-radius:9px;padding:10px 12px}
 .fg2 label{display:block;font-size:10px;font-weight:600;color:#8A92A6;margin-bottom:3px}
 .fg2 input{width:70px;padding:6px 8px;border:1.5px solid #D5D9E0;border-radius:6px;font-size:13px}
+.tn-hrs{font-size:13px;font-weight:600;color:#0A6E50;padding-bottom:7px;white-space:nowrap}
 .delbtn{background:none;border:none;color:#EF4444;cursor:pointer;font-size:11px;font-weight:600}
 .delbtn:hover{text-decoration:underline}
 .cfg-t{width:100%;border-collapse:collapse;min-width:580px}
@@ -188,7 +189,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.4</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.5</div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -286,8 +287,9 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mbody">
       <div class="cfg-info">Los turnos que crees acá quedan guardados en la base compartida y disponibles para todos los colaboradores y semanas.</div>
       <div class="turnos-new">
-        <div class="fg2"><label>Desde</label><input type="number" id="tn-a" min="0" max="23" placeholder="9"></div>
-        <div class="fg2"><label>Hasta</label><input type="number" id="tn-b" min="1" max="24" placeholder="18"></div>
+        <div class="fg2"><label>Desde</label><input type="number" id="tn-a" min="0" max="23" placeholder="9" oninput="updTnHrs()"></div>
+        <div class="fg2"><label>Hasta</label><input type="number" id="tn-b" min="1" max="24" placeholder="18" oninput="updTnHrs()"></div>
+        <div class="fg2 tn-hrs" id="tn-hrs">&nbsp;</div>
         <button class="bsv" onclick="createTurno()">Crear turno</button>
       </div>
       <div style="overflow-x:auto">
@@ -840,12 +842,20 @@ function renderTurnosList(){
     body.appendChild(tr);
   });
 }
+function updTnHrs(){
+  const a=parseInt(document.getElementById("tn-a").value,10);
+  const b=parseInt(document.getElementById("tn-b").value,10);
+  const el=document.getElementById("tn-hrs");
+  if(isNaN(a)||isNaN(b)||a<0||a>23||b<=a||b>24){el.innerHTML="&nbsp;";return;}
+  el.textContent=`${b-a}h`;
+}
 function openTurnos(){
   const pw=prompt("Ingresá la contraseña para gestionar turnos:");
   if(pw===null)return;
   if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
   document.getElementById("tn-a").value="";
   document.getElementById("tn-b").value="";
+  updTnHrs();
   renderTurnosList();
   document.getElementById("movTurnos").style.display="block";
   document.body.style.overflow="hidden";
@@ -861,6 +871,7 @@ function createTurno(){
   addTurno(a,b);
   document.getElementById("tn-a").value="";
   document.getElementById("tn-b").value="";
+  updTnHrs();
 }
 function removeTurno(v){
   if(!confirm("¿Eliminar este turno de la lista? Las celdas que ya lo tengan asignado no se modifican."))return;
