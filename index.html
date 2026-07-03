@@ -77,7 +77,10 @@ tr.now .td-t{background:#FEF9C3;color:#92400E;border-right:2px solid #F6CC00 !im
 /* DATA CELLS */
 .td-p{text-align:center;padding:3px 2px;vertical-align:middle;font-size:9px;font-weight:700;min-width:72px;background:#F8F8F8}
 .td-p.tod-col{background:#F0FDF9}
+.td-p.offhour{background:#EAECEF}
+.td-p.tod-col.offhour{background:#E3F2ED}
 .td-p.on{cursor:default}
+.th-p.off{background:#D5D9E0;color:#8A92A6}
 tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.75}}
 
@@ -217,8 +220,7 @@ function dow(d){const j=d.getDay();return j===0?6:j-1;}
 function wkMon(d){const c=new Date(d);const j=c.getDay();c.setDate(c.getDate()-(j===0?6:j-1));c.setHours(0,0,0,0);return c;}
 function shHrs(sh){if(!sh)return new Set();const[s,e]=sh.split("-").map(Number);return new Set(Array.from({length:e-s},(_,i)=>s+i));}
 function workersOn(d){
-  return ORDER.map(p=>({p,sh:SCH[p][d]})).filter(w=>w.sh)
-    .sort((a,b)=>parseInt(a.sh)-parseInt(b.sh));
+  return ORDER.map(p=>({p,sh:SCH[p][d]}));
 }
 
 /* ── CLOCK ── */
@@ -296,16 +298,15 @@ function renderGrid(){
   });
   head.appendChild(r1);
 
-  // Row 2: person sub-headers
+  // Row 2: person sub-headers (siempre las 5 personas, mismo orden todos los días)
   const r2=document.createElement("tr");
   wdays.forEach(({date,dow:d,workers},wi)=>{
-    workers.forEach(({p},pi)=>{
+    workers.forEach(({p,sh},pi)=>{
       const[bg,tc]=COLORS[p];
       const isT=isThisWk&&d===todayDow;
       const th=document.createElement("th");
-      th.className="th-p"+(isT?" tod-col":"");
-      th.style.background=`#${bg}`;
-      th.style.color=`#${tc}`;
+      th.className="th-p"+(isT?" tod-col":"")+(sh?"":" off");
+      if(sh){th.style.background=`#${bg}`;th.style.color=`#${tc}`;}
       th.textContent=p;
       if(pi===0&&wi>0)th.style.borderLeft="2px solid #AAAAAA";
       r2.appendChild(th);
@@ -334,7 +335,7 @@ function renderGrid(){
         const isOn=shHrs(sh).has(h);
         const isLive=isNow&&isT&&isOn;
         const td=document.createElement("td");
-        td.className="td-p"+(isT?" tod-col":"")+(isOn?" on":"");
+        td.className="td-p"+(isT?" tod-col":"")+(isOn?" on":sh?" offhour":"");
         if(isOn){
           td.style.background=`#${bg}`;
           td.style.color=`#${tc}`;
