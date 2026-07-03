@@ -349,7 +349,11 @@ function nextWk(){wkStart.setDate(wkStart.getDate()+7);renderGrid();}
 function goToday(){wkStart=wkMon(now);renderGrid();}
 
 /* ── CONFIG ── */
+const CFG_PASS="GUADASOSA98";
 function openCfg(){
+  const pw=prompt("Ingresá la contraseña para editar la configuración:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
   const body=document.getElementById("cfg-body");body.innerHTML="";
   ORDER.forEach(p=>{
     const[bg,tc]=COLORS[p];
