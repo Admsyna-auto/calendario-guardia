@@ -125,6 +125,10 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .mbody{padding:14px 18px}
 .mft{padding:10px 18px;border-top:1px solid #EAEDF0;display:flex;gap:6px;align-items:center}
 .cfg-info{background:#EDFAF7;border:1px solid #A7EBD8;border-radius:9px;padding:9px 12px;margin-bottom:14px;font-size:11px;color:#0A6E50;line-height:1.5}
+.cfg-wknav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cfg-wkcur{flex:1;text-align:center;font-size:13px;font-weight:600;color:#2D3142}
+.histbtn{background:none;border:1.5px solid #D5D9E0;color:var(--dark);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px}
+.histbtn:hover{background:#F0F2F5}
 .cfg-t{width:100%;border-collapse:collapse;min-width:580px}
 .cfg-t th{padding:5px 3px;font-size:9px;font-weight:700;color:#9199A8;text-align:center;border-bottom:1.5px solid #EAEDF0;text-transform:uppercase;letter-spacing:.06em}
 .cfg-t th.thp{text-align:left}.cfg-t th.thh{text-align:right}
@@ -154,6 +158,8 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
   <div><div class="hdr-title">Guardia Administrativa</div><div class="hdr-sub">Riiing / Syna S.A. · Julio 2026</div></div>
   <div class="hdr-r">
     <div><div class="hdr-time" id="clock">--:--</div><div class="hdr-ds" id="clock-d"></div></div>
+    <button class="gear" onclick="openHoras()" title="Horas del mes" aria-label="Horas del mes">&#128202;</button>
+    <button class="gear" onclick="openHist()" title="Historial" aria-label="Historial">&#128337;</button>
     <button class="gear" onclick="openCfg()" title="Configurar" aria-label="Configurar">&#9881;</button>
   </div>
 </header>
@@ -176,18 +182,23 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-03.8</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.1</div>
 </div>
 
 <!-- CONFIG MODAL -->
 <div class="mov" id="mov" onclick="if(event.target.id==='mov')closeCfg()">
   <div class="modal">
     <div class="mhdr">
-      <div style="flex:1"><h2>Configurar horarios</h2><p>Turno de cada persona por día de la semana</p></div>
+      <div style="flex:1"><h2>Configurar horarios</h2><p id="cfg-wklbl">Turno de cada persona por día de la semana</p></div>
       <button class="mc" onclick="closeCfg()">&#215;</button>
     </div>
     <div class="mbody">
-      <div class="cfg-info">Los cambios se guardan en la base de datos compartida: se ven igual en cualquier navegador. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
+      <div class="cfg-info">Editás el horario de <strong>una semana puntual</strong>. Si no la tocás, hereda automáticamente el horario de la última semana configurada. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
+      <div class="cfg-wknav">
+        <button class="nb" onclick="cfgPrevWk()">&#8249;</button>
+        <div class="cfg-wkcur" id="cfg-wkcur"></div>
+        <button class="nb" onclick="cfgNextWk()">&#8250;</button>
+      </div>
       <div style="overflow-x:auto">
         <table class="cfg-t">
           <thead><tr>
@@ -200,9 +211,61 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
       </div>
     </div>
     <div class="mft">
-      <button class="brs" onclick="resetCfg()">Restaurar valores originales</button>
+      <button class="brs" onclick="resetCfg()">Quitar cambios de esta semana</button>
       <button class="bcn" onclick="closeCfg()">Cancelar</button>
       <button class="bsv" onclick="saveCfg()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIAL MODAL -->
+<div class="mov" id="movHist" onclick="if(event.target.id==='movHist')closeHist()">
+  <div class="modal">
+    <div class="mhdr">
+      <div style="flex:1"><h2>Historial de cambios</h2><p>Semanas con un horario configurado explícitamente</p></div>
+      <button class="mc" onclick="closeHist()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div class="cfg-info">Cada fila es una semana en la que se guardó un cambio. Las semanas sin cambios propios heredan el horario de la fila más reciente anterior.</div>
+      <div style="overflow-x:auto">
+        <table class="cfg-t">
+          <thead><tr>
+            <th class="thp">Semana desde</th>
+            <th>Ana</th><th>Franco</th><th>Yazmin</th><th>Martina</th><th>Victoria</th>
+            <th class="thh">Acción</th>
+          </tr></thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="bcn" onclick="closeHist()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HORAS MENSUALES MODAL -->
+<div class="mov" id="movHoras" onclick="if(event.target.id==='movHoras')closeHoras()">
+  <div class="modal">
+    <div class="mhdr">
+      <div style="flex:1"><h2>Horas del mes</h2><p>Suma de horas configuradas por persona</p></div>
+      <button class="mc" onclick="closeHoras()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div class="cfg-wknav">
+        <button class="nb" onclick="horasPrevM()">&#8249;</button>
+        <div class="cfg-wkcur" id="horas-mlbl"></div>
+        <button class="nb" onclick="horasNextM()">&#8250;</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cfg-t">
+          <thead><tr><th class="thp">Colaborador</th><th class="thh">Horas</th><th class="thh">Contrato/sem</th></tr></thead>
+          <tbody id="horas-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="bcn" onclick="closeHoras()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -216,7 +279,6 @@ const DEFAULTS={
   Martina: {0:"9-17", 1:"9-17", 2:"9-17", 3:"9-17", 4:null,   5:null,   6:null},
   Victoria:{0:"14-22",1:"14-22",2:"14-22",3:null,   4:null,   5:null,   6:"10-18"},
 };
-let SCH=JSON.parse(JSON.stringify(DEFAULTS));
 const CONTRACT={Ana:48,Franco:48,Yazmin:48,Martina:32,Victoria:32};
 const FERIADOS={"9-7-2026":"Día de la Independencia"};
 const ORDER=["Ana","Franco","Yazmin","Martina","Victoria"];
@@ -248,9 +310,35 @@ function pad(n){return String(n).padStart(2,"0");}
 function dk(d){return`${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;}
 function dow(d){const j=d.getDay();return j===0?6:j-1;}
 function wkMon(d){const c=new Date(d);const j=c.getDay();c.setDate(c.getDate()-(j===0?6:j-1));c.setHours(0,0,0,0);return c;}
+function isoDate(d){return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 function shHrs(sh){if(!sh)return new Set();const[s,e]=sh.split("-").map(Number);return new Set(Array.from({length:e-s},(_,i)=>s+i));}
-function workersOn(d){
-  return ORDER.map(p=>({p,sh:SCH[p][d]}));
+function shHours(sh){if(!sh)return 0;const[a,b]=sh.split("-").map(Number);return(!isNaN(a)&&!isNaN(b))?b-a:0;}
+function workersOn(sch,d){
+  return ORDER.map(p=>({p,sh:sch[p][d]}));
+}
+
+/* ── HORARIOS POR SEMANA (con herencia) ── */
+let WEEKS={};
+let weeksSynced=false;
+function effSchedule(weekMon){
+  const iso=isoDate(weekMon);
+  const keys=Object.keys(WEEKS).filter(k=>k<=iso).sort();
+  return keys.length?WEEKS[keys[keys.length-1]]:DEFAULTS;
+}
+function weekHours(sch){
+  const totals={};
+  ORDER.forEach(p=>{let t=0;for(let d=0;d<=6;d++)t+=shHours(sch[p][d]);totals[p]=t;});
+  return totals;
+}
+function monthHours(year,month){
+  const totals={};ORDER.forEach(p=>totals[p]=0);
+  const first=new Date(year,month,1), last=new Date(year,month+1,0);
+  for(let dt=new Date(first);dt<=last;dt.setDate(dt.getDate()+1)){
+    const sch=effSchedule(wkMon(dt));
+    const dw=dow(dt);
+    ORDER.forEach(p=>totals[p]+=shHours(sch[p][dw]));
+  }
+  return totals;
 }
 
 /* ── CLOCK ── */
@@ -271,21 +359,15 @@ const firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-const scheduleDoc=db.collection("config").doc("schedule");
+const weeksCol=db.collection("weeks");
 
-/* ── CONFIG LOAD (Firestore, tiempo real) ── */
-let firestoreSynced=false;
-function applyRemoteCfg(c){
-  ORDER.forEach(p=>{if(c&&c[p])for(let d=0;d<=6;d++)if(c[p][d]!==undefined)SCH[p][d]=c[p][d];});
-}
+/* ── CARGA DE SEMANAS (Firestore, tiempo real) ── */
 function loadCfg(){
-  scheduleDoc.onSnapshot(snap=>{
-    if(snap.exists){
-      applyRemoteCfg(snap.data());
-    }else{
-      SCH=JSON.parse(JSON.stringify(DEFAULTS));
-    }
-    firestoreSynced=true;
+  weeksCol.onSnapshot(snap=>{
+    const w={};
+    snap.forEach(doc=>{w[doc.id]=doc.data();});
+    WEEKS=w;
+    weeksSynced=true;
     renderGrid();
   },err=>{console.error("Firestore error:",err);});
 }
@@ -335,10 +417,11 @@ function renderWeek(){
   document.getElementById("wsub").textContent=isThisWk?"Semana actual":"";
   document.getElementById("btn-hoy").style.display=isThisWk?"none":"";
 
+  const sch=effSchedule(wkStart);
   // Build week structure: array of {date, dow, workers}
   const wdays=Array.from({length:7},(_,i)=>{
     const d=new Date(wkStart);d.setDate(wkStart.getDate()+i);
-    return{date:d, dow:i, workers:workersOn(i)};
+    return{date:d, dow:i, workers:workersOn(sch,i)};
   });
 
   /* ── THEAD ── */
@@ -436,7 +519,8 @@ function renderDay(){
   const d=cursor, dw=dow(d);
   const isToday=dk(d)===dk(now);
   const curH=now.getHours();
-  const workers=workersOn(dw);
+  const sch=effSchedule(wkMon(d));
+  const workers=workersOn(sch,dw);
   const fer=FERIADOS[dk(d)];
 
   document.getElementById("wlbl").textContent=`${DAYS_L[dw]} ${d.getDate()} de ${MONTHS[d.getMonth()]} de ${d.getFullYear()}`;
@@ -519,10 +603,11 @@ function renderMonth(){
     const cell=document.createElement("div");
     cell.className="mcell"+(isOther?" other":"")+(isToday?" today":"");
     cell.onclick=()=>goToDate(d);
+    const sch=effSchedule(wkMon(d));
     let html=`<div class="mnum">${d.getDate()}</div>`;
     if(fer)html+=`<div class="mfer">⚑ ${fer}</div>`;
     ORDER.forEach(p=>{
-      const sh=SCH[p][dw];
+      const sh=sch[p][dw];
       if(!sh)return;
       const[bg,tc]=COLORS[p];
       const lbl=shLabel(sh);
@@ -535,14 +620,15 @@ function renderMonth(){
   document.getElementById("leg").innerHTML="";
 }
 
-/* ── CONFIG ── */
+/* ── CONFIG (por semana) ── */
 function shLabel(sh){const o=SOPTS.find(o=>o.v===(sh||""));return o?o.l:sh;}
 const CFG_PASS="GUADASOSA98";
-function openCfg(){
-  if(!firestoreSynced){alert("Todavía se está sincronizando con la base de datos. Esperá unos segundos y volvé a intentar.");return;}
-  const pw=prompt("Ingresá la contraseña para editar la configuración:");
-  if(pw===null)return;
-  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
+let cfgWeekStart=null;
+function fillCfgBody(){
+  const sch=effSchedule(cfgWeekStart);
+  const wkEnd=new Date(cfgWeekStart);wkEnd.setDate(cfgWeekStart.getDate()+6);
+  document.getElementById("cfg-wkcur").textContent=
+    `Semana del ${cfgWeekStart.getDate()}/${cfgWeekStart.getMonth()+1} al ${wkEnd.getDate()}/${wkEnd.getMonth()+1}`;
   const body=document.getElementById("cfg-body");body.innerHTML="";
   ORDER.forEach(p=>{
     const[bg,tc]=COLORS[p];
@@ -554,15 +640,25 @@ function openCfg(){
       const td=document.createElement("td");
       const s=document.createElement("select");s.id=`c-${p}-${d}`;s.className="csel";
       SOPTS.forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.l;s.appendChild(op);});
-      s.value=SCH[p][d]||"";sStyle(s);s.onchange=()=>{sStyle(s);updH(p);};
+      s.value=sch[p][d]||"";sStyle(s);s.onchange=()=>{sStyle(s);updH(p);};
       td.appendChild(s);tr.appendChild(td);
     }
     const tdH=document.createElement("td");tdH.className="tdh";tdH.id=`ch-${p}`;tr.appendChild(tdH);
     body.appendChild(tr);updH(p);
   });
+}
+function openCfg(){
+  if(!weeksSynced){alert("Todavía se está sincronizando con la base de datos. Esperá unos segundos y volvé a intentar.");return;}
+  const pw=prompt("Ingresá la contraseña para editar la configuración:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
+  cfgWeekStart=wkMon(view==="week"?wkStart:cursor);
+  fillCfgBody();
   document.getElementById("mov").style.display="block";
   document.body.style.overflow="hidden";
 }
+function cfgPrevWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()-7);fillCfgBody();}
+function cfgNextWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()+7);fillCfgBody();}
 function sStyle(s){s.className="csel "+(s.value?"iss":"isf");}
 function updH(person){
   let tot=0;
@@ -574,16 +670,70 @@ function updH(person){
 function closeCfg(){document.getElementById("mov").style.display="none";document.body.style.overflow="";}
 function saveCfg(){
   const cfg={};
-  ORDER.forEach(p=>{cfg[p]={};for(let d=0;d<=6;d++){const s=document.getElementById(`c-${p}-${d}`);cfg[p][d]=s?(s.value||null):null;SCH[p][d]=cfg[p][d];}});
-  scheduleDoc.set(cfg).catch(err=>alert("No se pudo guardar: "+err.message));
+  ORDER.forEach(p=>{cfg[p]={};for(let d=0;d<=6;d++){const s=document.getElementById(`c-${p}-${d}`);cfg[p][d]=s?(s.value||null):null;}});
+  weeksCol.doc(isoDate(cfgWeekStart)).set(cfg).catch(err=>alert("No se pudo guardar: "+err.message));
   closeCfg();renderGrid();
 }
 function resetCfg(){
-  if(!confirm("¿Restaurar la plantilla original?"))return;
-  scheduleDoc.set(DEFAULTS).catch(err=>alert("No se pudo restaurar: "+err.message));
-  SCH=JSON.parse(JSON.stringify(DEFAULTS));
+  if(!confirm("¿Quitar el cambio guardado para esta semana? Va a volver a heredar el horario de la semana configurada anterior."))return;
+  weeksCol.doc(isoDate(cfgWeekStart)).delete().catch(err=>alert("No se pudo restaurar: "+err.message));
   closeCfg();renderGrid();
 }
+
+/* ── HISTORIAL ── */
+function openHist(){
+  const body=document.getElementById("hist-body");body.innerHTML="";
+  const keys=Object.keys(WEEKS).sort().reverse();
+  if(!keys.length){
+    body.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#8A92A6;padding:16px">Todavía no hay cambios guardados: todas las semanas usan la plantilla original.</td></tr>`;
+  }else{
+    keys.forEach(k=>{
+      const sch=WEEKS[k];
+      const hrs=weekHours(sch);
+      const[y,m,dd]=k.split("-").map(Number);
+      const tr=document.createElement("tr");
+      let html=`<td class="tdp">${dd}/${m}/${y}</td>`;
+      ORDER.forEach(p=>html+=`<td>${hrs[p]}h</td>`);
+      html+=`<td class="tdh"><button class="histbtn" onclick="goToWeekStr('${k}')">Ver</button></td>`;
+      tr.innerHTML=html;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById("movHist").style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeHist(){document.getElementById("movHist").style.display="none";document.body.style.overflow="";}
+function goToWeekStr(iso){
+  const[y,m,dd]=iso.split("-").map(Number);
+  wkStart=new Date(y,m-1,dd);
+  closeHist();
+  setView("week");
+}
+
+/* ── HORAS DEL MES ── */
+let horasCursor=new Date();
+function renderHoras(){
+  const y=horasCursor.getFullYear(), m=horasCursor.getMonth();
+  document.getElementById("horas-mlbl").textContent=`${MONTHS[m][0].toUpperCase()+MONTHS[m].slice(1)} de ${y}`;
+  const tot=monthHours(y,m);
+  const body=document.getElementById("horas-body");body.innerHTML="";
+  ORDER.forEach(p=>{
+    const[bg,tc]=COLORS[p];
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="tdp"><span class="pdot" style="background:#${bg};border:1px solid #${tc}"></span>${p}</td>`+
+      `<td class="tdh">${tot[p]}h</td><td class="tdh">${CONTRACT[p]}h/sem</td>`;
+    body.appendChild(tr);
+  });
+}
+function openHoras(){
+  horasCursor=new Date(cursor);
+  renderHoras();
+  document.getElementById("movHoras").style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeHoras(){document.getElementById("movHoras").style.display="none";document.body.style.overflow="";}
+function horasPrevM(){horasCursor.setMonth(horasCursor.getMonth()-1);renderHoras();}
+function horasNextM(){horasCursor.setMonth(horasCursor.getMonth()+1);renderHoras();}
 
 /* ── INIT ── */
 setView("week");loadCfg();tick();
