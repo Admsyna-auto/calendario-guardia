@@ -149,18 +149,18 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
   </div>
   <div class="gw"><table class="sg"><thead id="sg-h"></thead><tbody id="sg-b"></tbody></table></div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-03.6</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-03.7</div>
 </div>
 
 <!-- CONFIG MODAL -->
 <div class="mov" id="mov" onclick="if(event.target.id==='mov')closeCfg()">
   <div class="modal">
     <div class="mhdr">
-      <div style="flex:1"><h2>Horarios configurados</h2><p>Turno de cada persona por día de la semana (solo lectura)</p></div>
+      <div style="flex:1"><h2>Configurar horarios</h2><p>Turno de cada persona por día de la semana</p></div>
       <button class="mc" onclick="closeCfg()">&#215;</button>
     </div>
     <div class="mbody">
-      <div class="cfg-info">Esta vista refleja el horario guardado en la base de datos compartida. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
+      <div class="cfg-info">Los cambios se guardan en la base de datos compartida: se ven igual en cualquier navegador. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
       <div style="overflow-x:auto">
         <table class="cfg-t">
           <thead><tr>
@@ -173,7 +173,9 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
       </div>
     </div>
     <div class="mft">
-      <button class="bcn" onclick="closeCfg()">Cerrar</button>
+      <button class="brs" onclick="resetCfg()">Restaurar valores originales</button>
+      <button class="bcn" onclick="closeCfg()">Cancelar</button>
+      <button class="bsv" onclick="saveCfg()">Guardar</button>
     </div>
   </div>
 </div>
@@ -244,6 +246,7 @@ const db=firebase.firestore();
 const scheduleDoc=db.collection("config").doc("schedule");
 
 /* ── CONFIG LOAD (Firestore, tiempo real) ── */
+let firestoreSynced=false;
 function applyRemoteCfg(c){
   ORDER.forEach(p=>{if(c&&c[p])for(let d=0;d<=6;d++)if(c[p][d]!==undefined)SCH[p][d]=c[p][d];});
 }
@@ -254,6 +257,7 @@ function loadCfg(){
     }else{
       SCH=JSON.parse(JSON.stringify(DEFAULTS));
     }
+    firestoreSynced=true;
     renderGrid();
   },err=>{console.error("Firestore error:",err);});
 }
@@ -372,8 +376,12 @@ function nextWk(){wkStart.setDate(wkStart.getDate()+7);renderGrid();}
 function goToday(){wkStart=wkMon(now);renderGrid();}
 
 /* ── CONFIG ── */
-function shLabel(sh){const o=SOPTS.find(o=>o.v===(sh||""));return o?o.l:sh;}
+const CFG_PASS="GUADASOSA98";
 function openCfg(){
+  if(!firestoreSynced){alert("Todavía se está sincronizando con la base de datos. Esperá unos segundos y volvé a intentar.");return;}
+  const pw=prompt("Ingresá la contraseña para editar la configuración:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
   const body=document.getElementById("cfg-body");body.innerHTML="";
   ORDER.forEach(p=>{
     const[bg,tc]=COLORS[p];
@@ -381,26 +389,40 @@ function openCfg(){
     const td0=document.createElement("td");td0.className="tdp";
     td0.innerHTML=`<span class="pdot" style="background:#${bg};border:1px solid #${tc}"></span>${p}`;
     tr.appendChild(td0);
-    let tot=0;
     for(let d=0;d<=6;d++){
       const td=document.createElement("td");
-      const sh=SCH[p][d];
-      td.textContent=shLabel(sh);
-      td.style.color=sh?"#0A6E50":"#A0A8B4";
-      td.style.fontStyle=sh?"normal":"italic";
-      if(sh){const[a,b]=sh.split("-").map(Number);if(!isNaN(a)&&!isNaN(b))tot+=b-a;}
-      tr.appendChild(td);
+      const s=document.createElement("select");s.id=`c-${p}-${d}`;s.className="csel";
+      SOPTS.forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.l;s.appendChild(op);});
+      s.value=SCH[p][d]||"";sStyle(s);s.onchange=()=>{sStyle(s);updH(p);};
+      td.appendChild(s);tr.appendChild(td);
     }
-    const con=CONTRACT[p],diff=Math.abs(tot-con),cls=diff===0?"hok":diff<=3?"hwrn":"hbad";
-    const tdH=document.createElement("td");tdH.className="tdh";
-    tdH.innerHTML=`<span class="${cls}">${tot}h</span><span class="hct"> /${con}h</span>`;
-    tr.appendChild(tdH);
-    body.appendChild(tr);
+    const tdH=document.createElement("td");tdH.className="tdh";tdH.id=`ch-${p}`;tr.appendChild(tdH);
+    body.appendChild(tr);updH(p);
   });
   document.getElementById("mov").style.display="block";
   document.body.style.overflow="hidden";
 }
+function sStyle(s){s.className="csel "+(s.value?"iss":"isf");}
+function updH(person){
+  let tot=0;
+  for(let d=0;d<=6;d++){const s=document.getElementById(`c-${person}-${d}`);if(s&&s.value){const[a,b]=s.value.split("-").map(Number);if(!isNaN(a)&&!isNaN(b))tot+=b-a;}}
+  const con=CONTRACT[person],diff=Math.abs(tot-con),cls=diff===0?"hok":diff<=3?"hwrn":"hbad";
+  const el=document.getElementById(`ch-${person}`);
+  if(el)el.innerHTML=`<span class="${cls}">${tot}h</span><span class="hct"> /${con}h</span>`;
+}
 function closeCfg(){document.getElementById("mov").style.display="none";document.body.style.overflow="";}
+function saveCfg(){
+  const cfg={};
+  ORDER.forEach(p=>{cfg[p]={};for(let d=0;d<=6;d++){const s=document.getElementById(`c-${p}-${d}`);cfg[p][d]=s?(s.value||null):null;SCH[p][d]=cfg[p][d];}});
+  scheduleDoc.set(cfg).catch(err=>alert("No se pudo guardar: "+err.message));
+  closeCfg();renderGrid();
+}
+function resetCfg(){
+  if(!confirm("¿Restaurar la plantilla original?"))return;
+  scheduleDoc.set(DEFAULTS).catch(err=>alert("No se pudo restaurar: "+err.message));
+  SCH=JSON.parse(JSON.stringify(DEFAULTS));
+  closeCfg();renderGrid();
+}
 
 /* ── INIT ── */
 renderGrid();loadCfg();tick();
