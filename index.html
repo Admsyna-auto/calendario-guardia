@@ -129,6 +129,11 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .cfg-wkcur{flex:1;text-align:center;font-size:13px;font-weight:600;color:#2D3142}
 .histbtn{background:none;border:1.5px solid #D5D9E0;color:var(--dark);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px}
 .histbtn:hover{background:#F0F2F5}
+.turnos-new{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;background:#F8FAFB;border-radius:9px;padding:10px 12px}
+.fg2 label{display:block;font-size:10px;font-weight:600;color:#8A92A6;margin-bottom:3px}
+.fg2 input{width:70px;padding:6px 8px;border:1.5px solid #D5D9E0;border-radius:6px;font-size:13px}
+.delbtn{background:none;border:none;color:#EF4444;cursor:pointer;font-size:11px;font-weight:600}
+.delbtn:hover{text-decoration:underline}
 .cfg-t{width:100%;border-collapse:collapse;min-width:580px}
 .cfg-t th{padding:5px 3px;font-size:9px;font-weight:700;color:#9199A8;text-align:center;border-bottom:1.5px solid #EAEDF0;text-transform:uppercase;letter-spacing:.06em}
 .cfg-t th.thp{text-align:left}.cfg-t th.thh{text-align:right}
@@ -160,6 +165,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div><div class="hdr-time" id="clock">--:--</div><div class="hdr-ds" id="clock-d"></div></div>
     <button class="gear" onclick="openHoras()" title="Horas del mes" aria-label="Horas del mes">&#128202;</button>
     <button class="gear" onclick="openHist()" title="Historial" aria-label="Historial">&#128337;</button>
+    <button class="gear" onclick="openTurnos()" title="Turnos" aria-label="Turnos">&#128221;</button>
     <button class="gear" onclick="openCfg()" title="Configurar" aria-label="Configurar">&#9881;</button>
   </div>
 </header>
@@ -182,7 +188,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.2</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.3</div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -270,6 +276,33 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
   </div>
 </div>
 
+<!-- TURNOS MODAL -->
+<div class="mov" id="movTurnos" onclick="if(event.target.id==='movTurnos')closeTurnos()">
+  <div class="modal">
+    <div class="mhdr">
+      <div style="flex:1"><h2>Turnos</h2><p>Franjas horarias disponibles para asignar en Configurar</p></div>
+      <button class="mc" onclick="closeTurnos()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div class="cfg-info">Los turnos que crees acá quedan guardados en la base compartida y disponibles para todos los colaboradores y semanas.</div>
+      <div class="turnos-new">
+        <div class="fg2"><label>Desde</label><input type="number" id="tn-a" min="0" max="23" placeholder="9"></div>
+        <div class="fg2"><label>Hasta</label><input type="number" id="tn-b" min="1" max="24" placeholder="18"></div>
+        <button class="bsv" onclick="createTurno()">Crear turno</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cfg-t">
+          <thead><tr><th class="thp">Turno</th><th class="thh">Acción</th></tr></thead>
+          <tbody id="turnos-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="bcn" onclick="closeTurnos()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ── DATOS ── */
 const DEFAULTS={
@@ -292,7 +325,7 @@ const COLORS={
   Martina:["FAC775","633806"],
   Victoria:["CECBF6","3C3489"],
 };
-const SOPTS=[
+const SOPTS_BASE=[
   {v:"",l:"— Franco"},{v:"8-14",l:"08:00-14:00"},{v:"8-17",l:"08:00-17:00"},
   {v:"9-17",l:"09:00-17:00"},{v:"9-18",l:"09:00-18:00"},{v:"9-19",l:"09:00-19:00"},
   {v:"10-18",l:"10:00-18:00"},{v:"10-19",l:"10:00-19:00"},{v:"10-20",l:"10:00-20:00"},
@@ -300,6 +333,12 @@ const SOPTS=[
   {v:"13-21",l:"13:00-21:00"},{v:"13-22",l:"13:00-22:00"},
   {v:"14-22",l:"14:00-22:00"},{v:"15-22",l:"15:00-22:00"},
 ];
+let CUSTOM_TURNOS=[];
+let SOPTS=SOPTS_BASE.slice();
+function rebuildSOPTS(){
+  SOPTS=SOPTS_BASE.concat(CUSTOM_TURNOS.filter(c=>!SOPTS_BASE.find(b=>b.v===c.v)))
+    .sort((x,y)=>{if(x.v==="")return-1;if(y.v==="")return 1;return parseInt(x.v)-parseInt(y.v);});
+}
 
 /* ── STATE ── */
 let now=new Date(), wkStart=wkMon(new Date());
@@ -360,6 +399,7 @@ const firebaseConfig={
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const weeksCol=db.collection("weeks");
+const turnosCol=db.collection("turnos");
 
 /* ── CARGA DE SEMANAS (Firestore, tiempo real) ── */
 function loadCfg(){
@@ -370,6 +410,25 @@ function loadCfg(){
     weeksSynced=true;
     renderGrid();
   },err=>{console.error("Firestore error:",err);});
+}
+
+/* ── CARGA DE TURNOS PERSONALIZADOS (Firestore, tiempo real) ── */
+function loadTurnos(){
+  turnosCol.onSnapshot(snap=>{
+    CUSTOM_TURNOS=[];
+    snap.forEach(doc=>CUSTOM_TURNOS.push(doc.data()));
+    rebuildSOPTS();
+    document.querySelectorAll(".csel").forEach(sel=>populateSelect(sel,sel.value));
+    if(document.getElementById("movTurnos").style.display==="block")renderTurnosList();
+  },err=>{console.error("Firestore error:",err);});
+}
+function addTurno(a,b){
+  const v=`${a}-${b}`, l=`${pad(a)}:00-${pad(b)}:00`;
+  turnosCol.doc(v).set({v,l}).catch(err=>alert("No se pudo crear el turno: "+err.message));
+  return v;
+}
+function deleteTurno(v){
+  turnosCol.doc(v).delete().catch(err=>alert("No se pudo eliminar el turno: "+err.message));
 }
 
 /* ── VIEW SWITCH ── */
@@ -677,7 +736,7 @@ function onSelChange(s,person){
       alert("Formato inválido. Usá HH-HH con horas de 0 a 24 y fin mayor que inicio (ej: 10-18).");
       s.value="";sStyle(s);updH(person);return;
     }
-    const v=`${a}-${b}`;
+    const v=addTurno(a,b);
     if(!SOPTS.find(o=>o.v===v)){
       SOPTS.push({v,l:`${pad(a)}:00-${pad(b)}:00`});
       SOPTS.sort((x,y)=>{if(x.v==="")return-1;if(y.v==="")return 1;return parseInt(x.v)-parseInt(y.v);});
@@ -763,8 +822,46 @@ function closeHoras(){document.getElementById("movHoras").style.display="none";d
 function horasPrevM(){horasCursor.setMonth(horasCursor.getMonth()-1);renderHoras();}
 function horasNextM(){horasCursor.setMonth(horasCursor.getMonth()+1);renderHoras();}
 
+/* ── TURNOS ── */
+function renderTurnosList(){
+  const body=document.getElementById("turnos-body");body.innerHTML="";
+  SOPTS.forEach(o=>{
+    if(o.v==="")return;
+    const isBase=!!SOPTS_BASE.find(b=>b.v===o.v);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="tdp">${o.l}</td><td class="tdh">${isBase?"":`<button class="delbtn" onclick="removeTurno('${o.v}')">Eliminar</button>`}</td>`;
+    body.appendChild(tr);
+  });
+}
+function openTurnos(){
+  const pw=prompt("Ingresá la contraseña para gestionar turnos:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
+  document.getElementById("tn-a").value="";
+  document.getElementById("tn-b").value="";
+  renderTurnosList();
+  document.getElementById("movTurnos").style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeTurnos(){document.getElementById("movTurnos").style.display="none";document.body.style.overflow="";}
+function createTurno(){
+  const a=parseInt(document.getElementById("tn-a").value,10);
+  const b=parseInt(document.getElementById("tn-b").value,10);
+  if(isNaN(a)||isNaN(b)||a<0||a>23||b<=a||b>24){
+    alert("Ingresá horas válidas: Desde 0-23, Hasta mayor que Desde y hasta 24.");
+    return;
+  }
+  addTurno(a,b);
+  document.getElementById("tn-a").value="";
+  document.getElementById("tn-b").value="";
+}
+function removeTurno(v){
+  if(!confirm("¿Eliminar este turno de la lista? Las celdas que ya lo tengan asignado no se modifican."))return;
+  deleteTurno(v);
+}
+
 /* ── INIT ── */
-setView("week");loadCfg();tick();
+setView("week");loadCfg();loadTurnos();tick();
 setInterval(()=>{tick();renderGrid();},30000);
 </script>
 </body>
