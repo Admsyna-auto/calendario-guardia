@@ -230,7 +230,7 @@ function tick(){
 
 /* ── CONFIG LOAD ── */
 function loadCfg(){
-  try{const s=localStorage.getItem("guardia_r3");if(s){const c=JSON.parse(s);ORDER.forEach(p=>{if(c[p])for(let d=0;d<=6;d++)if(c[p][d]!==undefined)SCH[p][d]=c[p][d];});}}catch(e){}
+  try{const s=localStorage.getItem("guardia_r4");if(s){const c=JSON.parse(s);ORDER.forEach(p=>{if(c[p])for(let d=0;d<=6;d++)if(c[p][d]!==undefined)SCH[p][d]=c[p][d];});}}catch(e){}
 }
 
 /* ── RENDER GRID ── */
@@ -385,12 +385,12 @@ function closeCfg(){document.getElementById("mov").style.display="none";document
 function saveCfg(){
   const cfg={};
   ORDER.forEach(p=>{cfg[p]={};for(let d=0;d<=6;d++){const s=document.getElementById(`c-${p}-${d}`);cfg[p][d]=s?(s.value||null):null;SCH[p][d]=cfg[p][d];}});
-  try{localStorage.setItem("guardia_r3",JSON.stringify(cfg));}catch(e){}
+  try{localStorage.setItem("guardia_r4",JSON.stringify(cfg));}catch(e){}
   closeCfg();renderGrid();
 }
 function resetCfg(){
   if(!confirm("¿Restaurar la plantilla original?"))return;
-  try{localStorage.removeItem("guardia_r3");}catch(e){}
+  try{localStorage.removeItem("guardia_r4");}catch(e){}
   SCH=JSON.parse(JSON.stringify(DEFAULTS));
   closeCfg();renderGrid();
 }
