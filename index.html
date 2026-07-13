@@ -9,7 +9,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#EEF1F5;min-height:100vh}
-:root{--brand:#3ECDB0;--brand-d:#29A88E;--dark:#4A4F5C;}
+:root{--brand:#3ECDB0;--brand-d:#29A88E;--dark:#4A4F5C;--surface-1:#fff;--border:#E0E3E8;}
 
 /* HEADER */
 .hdr{background:var(--dark);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40;height:52px}
@@ -92,6 +92,37 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 
 /* DAY SEPARATOR */
 .day-sep{border-left:2px solid #AAAAAA !important}
+
+/* BREAK COLUMN */
+.th-break,.td-break{width:52px;min-width:52px}
+.th-break{background:#EF9F27;color:#412402}
+.td-break.brk1{background:#FAC775;color:#412402}
+.td-break.brk2{background:#EF9F27;color:#412402}
+.td-break .bl{font-size:9px;font-weight:700}
+.td-break .bm{font-size:8px}
+
+/* INFO ADICIONAL */
+.info-box{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:16px;margin:16px 12px 12px}
+.info-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.info-title{font-weight:600;font-size:14px;color:var(--dark)}
+.info-txt{font-size:12px;color:#2D3142;line-height:1.6;white-space:pre-wrap}
+.info-txt.ph{color:#A0A8B4;font-style:italic}
+.info-ta{width:100%;min-height:100px;border:1.5px solid #D5D9E0;border-radius:8px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical}
+.info-actions{display:flex;gap:8px;margin-top:10px}
+.ibtn{background:none;border:1.5px solid #D5D9E0;color:var(--dark);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:600}
+.ibtn:hover{background:#F0F2F5}
+
+/* CONFIG TABS */
+.cfgtabs{display:flex;gap:6px;margin-bottom:14px}
+.cfgtab{flex:1;background:#F5F7FA;border:none;border-radius:7px;padding:8px;cursor:pointer;font-size:12px;font-weight:600;color:#8A92A6}
+.cfgtab.on{background:var(--brand);color:#fff}
+.brk-t{width:100%;border-collapse:collapse}
+.brk-t th{padding:5px 3px;font-size:9px;font-weight:700;color:#9199A8;text-align:center;border-bottom:1.5px solid #EAEDF0;text-transform:uppercase}
+.brk-t td{padding:5px 4px;vertical-align:middle;text-align:center}
+.brk-win{display:flex;flex-direction:column;gap:3px;align-items:center}
+.brk-win select{width:100%;padding:3px 2px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:10px}
+.brk-win .brk-end{font-size:9px;color:#8A92A6}
+.brk-win input{width:44px;padding:3px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:10px;text-align:center}
 
 /* MONTH VIEW */
 .mgrid-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
@@ -189,7 +220,15 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.7</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.8</div>
+</div>
+
+<div class="info-box">
+  <div class="info-hdr">
+    <span class="info-title">&#128204; Información adicional</span>
+    <button class="ibtn" id="btn-edit-info" onclick="editInfo()">&#9999; Editar</button>
+  </div>
+  <div id="info-view"><div class="info-txt ph" id="info-txt">Sincronizando…</div></div>
 </div>
 
 <!-- CONFIG MODAL -->
@@ -200,27 +239,42 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
       <button class="mc" onclick="closeCfg()">&#215;</button>
     </div>
     <div class="mbody">
-      <div class="cfg-info">Editás el horario de <strong>una semana puntual</strong>. Si no la tocás, hereda automáticamente el horario de la última semana configurada. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
-      <div class="cfg-wknav">
-        <button class="nb" onclick="cfgPrevWk()">&#8249;</button>
-        <div class="cfg-wkcur" id="cfg-wkcur"></div>
-        <button class="nb" onclick="cfgNextWk()">&#8250;</button>
+      <div class="cfgtabs">
+        <button class="cfgtab on" id="cfgtab-turnos" onclick="cfgSwitchTab('turnos')">Turnos</button>
+        <button class="cfgtab" id="cfgtab-breaks" onclick="cfgSwitchTab('breaks')">Breaks</button>
       </div>
-      <div style="overflow-x:auto">
-        <table class="cfg-t">
-          <thead><tr>
-            <th class="thp">Colaborador</th>
-            <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
-            <th class="thh">Hs/sem</th>
-          </tr></thead>
-          <tbody id="cfg-body"></tbody>
-        </table>
+      <div id="cfgpane-turnos">
+        <div class="cfg-info">Editás el horario de <strong>una semana puntual</strong>. Si no la tocás, hereda automáticamente el horario de la última semana configurada. La columna <strong>Hs/sem</strong> compara con el contrato.</div>
+        <div class="cfg-wknav">
+          <button class="nb" onclick="cfgPrevWk()">&#8249;</button>
+          <div class="cfg-wkcur" id="cfg-wkcur"></div>
+          <button class="nb" onclick="cfgNextWk()">&#8250;</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="cfg-t">
+            <thead><tr>
+              <th class="thp">Colaborador</th>
+              <th>Lun</th><th>Mar</th><th>Mié</th><th>Jue</th><th>Vie</th><th>Sáb</th><th>Dom</th>
+              <th class="thh">Hs/sem</th>
+            </tr></thead>
+            <tbody id="cfg-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="cfgpane-breaks" style="display:none">
+        <div class="cfg-info">Ventanas de break de 30 minutos por día. Hasta 3 ventanas (A, B, C), con máximo de personas simultáneas. Dejá "—" para deshabilitar una ventana.</div>
+        <div style="overflow-x:auto">
+          <table class="brk-t">
+            <thead><tr><th style="text-align:left">Día</th><th>Ventana A</th><th>Ventana B</th><th>Ventana C</th></tr></thead>
+            <tbody id="brk-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="mft">
-      <button class="brs" onclick="resetCfg()">Quitar cambios de esta semana</button>
+      <button class="brs" id="cfg-resetbtn" onclick="cfgReset()">Quitar cambios de esta semana</button>
       <button class="bcn" onclick="closeCfg()">Cancelar</button>
-      <button class="bsv" onclick="saveCfg()">Guardar</button>
+      <button class="bsv" onclick="cfgSave()">Guardar</button>
     </div>
   </div>
 </div>
@@ -316,6 +370,18 @@ const DEFAULTS={
   Victoria:{0:"14-22",1:"14-22",2:"14-22",3:null,   4:null,   5:null,   6:"10-18"},
 };
 const CONTRACT={Ana:48,Franco:48,Yazmin:48,Martina:32,Victoria:32};
+// Ventanas de break por día (dow: 0=Lun … 6=Dom)
+// s = hora decimal de inicio (14.5 = 14:30), m = máx personas simultáneas. Duración siempre 30 min.
+const BREAK_DEFAULTS={
+  0:[{l:"A",s:14.5,m:2},{l:"B",s:15.5,m:2},{l:"C",s:20.5,m:1}],
+  1:[{l:"A",s:14,  m:1},{l:"B",s:15.5,m:2},{l:"C",s:20.5,m:2}],
+  2:[{l:"A",s:13.5,m:1},{l:"B",s:15.5,m:1},{l:"C",s:20.5,m:1}],
+  3:[{l:"A",s:13.5,m:1},{l:"B",s:15,  m:1},{l:"C",s:20.5,m:1}],
+  4:[{l:"A",s:13,  m:1},{l:"B",s:15,  m:1},{l:"C",s:20.5,m:1}],
+  5:[{l:"A",s:13,  m:1},{l:"B",s:15,  m:1},{l:"C",s:20.5,m:1}],
+  6:[{l:"A",s:14.5,m:1},{l:"B",s:15.5,m:1},{l:"C",s:20.5,m:1}],
+};
+let BREAKS=JSON.parse(JSON.stringify(BREAK_DEFAULTS));
 const FERIADOS={"9-7-2026":"Día de la Independencia"};
 const ORDER=["Ana","Franco","Yazmin","Martina","Victoria"];
 const DAYS_L=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
@@ -357,6 +423,11 @@ function shHrs(sh){if(!sh)return new Set();const[s,e]=sh.split("-").map(Number);
 function shHours(sh){if(!sh)return 0;const[a,b]=sh.split("-").map(Number);return(!isNaN(a)&&!isNaN(b))?b-a:0;}
 function workersOn(sch,d){
   return ORDER.map(p=>({p,sh:sch[p][d]}));
+}
+function hDec2hhmm(t){const h=Math.floor(t),m=Math.round((t-h)*60);return`${pad(h)}:${pad(m)}`;}
+function breakForHour(dw,h){
+  const wins=BREAKS[dw]||[];
+  return wins.find(w=>Math.floor(w.s)===h)||null;
 }
 
 /* ── HORARIOS POR SEMANA (con herencia) ── */
@@ -403,6 +474,8 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const weeksCol=db.collection("weeks");
 const turnosCol=db.collection("turnos");
+const breaksDoc=db.collection("config").doc("breaks");
+const infoDoc=db.collection("config").doc("info");
 
 /* ── CARGA DE SEMANAS (Firestore, tiempo real) ── */
 function loadCfg(){
@@ -440,6 +513,60 @@ function addTurno(a,b){
 }
 function deleteTurno(v){
   turnosCol.doc(v).delete().catch(err=>alert("No se pudo eliminar el turno: "+err.message));
+}
+
+/* ── CARGA DE BREAKS (Firestore, tiempo real) ── */
+let breaksSynced=false;
+function loadBreaks(){
+  breaksDoc.onSnapshot(snap=>{
+    BREAKS=snap.exists?snap.data():JSON.parse(JSON.stringify(BREAK_DEFAULTS));
+    breaksSynced=true;
+    renderGrid();
+  },err=>{console.error("Firestore error:",err);});
+}
+
+/* ── CARGA DE INFORMACIÓN ADICIONAL (Firestore, tiempo real) ── */
+let INFO_TEXT="", infoSynced=false, infoEditing=false;
+function loadInfo(){
+  infoDoc.onSnapshot(snap=>{
+    INFO_TEXT=snap.exists?(snap.data().text||""):"";
+    infoSynced=true;
+    if(!infoEditing)renderInfoView();
+  },err=>{console.error("Firestore error:",err);});
+}
+function renderInfoView(){
+  const box=document.getElementById("info-view");
+  if(INFO_TEXT){
+    box.innerHTML=`<div class="info-txt">${INFO_TEXT.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\n/g,"<br>")}</div>`;
+  }else{
+    box.innerHTML=`<div class="info-txt ph">Sin información adicional. Hacé clic en Editar para agregar.</div>`;
+  }
+  document.getElementById("btn-edit-info").style.display="";
+}
+function editInfo(){
+  if(!infoSynced){alert("Todavía se está sincronizando. Esperá unos segundos y volvé a intentar.");return;}
+  const pw=prompt("Ingresá la contraseña para editar:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
+  infoEditing=true;
+  document.getElementById("btn-edit-info").style.display="none";
+  const box=document.getElementById("info-view");
+  box.innerHTML=`<textarea class="info-ta" id="info-ta">${INFO_TEXT.replace(/</g,"&lt;")}</textarea>
+    <div class="info-actions">
+      <button class="bcn" onclick="cancelInfo()">Cancelar</button>
+      <button class="bsv" onclick="saveInfo()">Guardar</button>
+    </div>`;
+  document.getElementById("info-ta").focus();
+}
+function saveInfo(){
+  const txt=document.getElementById("info-ta").value;
+  infoDoc.set({text:txt}).catch(err=>alert("No se pudo guardar: "+err.message));
+  infoEditing=false;
+  renderInfoView();
+}
+function cancelInfo(){
+  infoEditing=false;
+  renderInfoView();
 }
 
 /* ── VIEW SWITCH ── */
@@ -508,7 +635,7 @@ function renderWeek(){
     const isT=isThisWk&&d===todayDow;
     const fer=FERIADOS[dk(date)];
     const th=document.createElement("th");
-    th.colSpan=workers.length;
+    th.colSpan=workers.length+1;
     th.className="th-day"+(isT?" tod":d>=5?" wke":" wkd")+(fer?" fer":"");
     if(wi>0)th.style.borderLeft="2px solid rgba(255,255,255,.5)";
     th.innerHTML=`<div class="dn">${DAYS_L[d]}&nbsp;${date.getDate()}/${date.getMonth()+1}${fer?" ⚑":""}</div>`;
@@ -516,7 +643,7 @@ function renderWeek(){
   });
   head.appendChild(r1);
 
-  // Row 2: person sub-headers (siempre las 5 personas, mismo orden todos los días)
+  // Row 2: person sub-headers (siempre las 5 personas, mismo orden todos los días) + Break
   const r2=document.createElement("tr");
   wdays.forEach(({date,dow:d,workers},wi)=>{
     workers.forEach(({p,sh},pi)=>{
@@ -529,6 +656,10 @@ function renderWeek(){
       if(pi===0&&wi>0)th.style.borderLeft="2px solid #AAAAAA";
       r2.appendChild(th);
     });
+    const thBrk=document.createElement("th");
+    thBrk.className="th-p th-break";
+    thBrk.textContent="☕ Break";
+    r2.appendChild(thBrk);
   });
   head.appendChild(r2);
 
@@ -545,7 +676,7 @@ function renderWeek(){
     const td0=document.createElement("td");
     td0.className="td-t";td0.textContent=label;tr.appendChild(td0);
 
-    // Person cells
+    // Person cells + Break
     wdays.forEach(({date,dow:d,workers},wi)=>{
       workers.forEach(({p,sh},pi)=>{
         const[bg,tc]=COLORS[p];
@@ -563,6 +694,11 @@ function renderWeek(){
         if(pi===0&&wi>0)td.style.borderLeft="2px solid #AAAAAA";
         tr.appendChild(td);
       });
+      const win=breakForHour(d,h);
+      const tdB=document.createElement("td");
+      tdB.className="td-break"+(win?(win.m>=2?" brk2":" brk1"):"");
+      if(win)tdB.innerHTML=`<div class="bl">Vent. ${win.l}</div><div class="bm">máx ${win.m} pers.</div>`;
+      tr.appendChild(tdB);
     });
     body.appendChild(tr);
   });
@@ -601,7 +737,7 @@ function renderDay(){
   const r1=document.createElement("tr");
   const th0=document.createElement("th");th0.rowSpan=2;th0.className="th-t";th0.textContent="Horario";r1.appendChild(th0);
   const th=document.createElement("th");
-  th.colSpan=workers.length;
+  th.colSpan=workers.length+1;
   th.className="th-day"+(isToday?" tod":dw>=5?" wke":" wkd")+(fer?" fer":"");
   th.innerHTML=`<div class="dn">${DAYS_L[dw]}&nbsp;${d.getDate()}/${d.getMonth()+1}${fer?" ⚑":""}</div>`;
   r1.appendChild(th);
@@ -616,6 +752,10 @@ function renderDay(){
     thp.textContent=p;
     r2.appendChild(thp);
   });
+  const thBrk=document.createElement("th");
+  thBrk.className="th-p th-break";
+  thBrk.textContent="☕ Break";
+  r2.appendChild(thBrk);
   head.appendChild(r2);
 
   const body=document.getElementById("sg-b");body.innerHTML="";
@@ -636,6 +776,11 @@ function renderDay(){
       }
       tr.appendChild(td);
     });
+    const win=breakForHour(dw,h);
+    const tdB=document.createElement("td");
+    tdB.className="td-break"+(win?(win.m>=2?" brk2":" brk1"):"");
+    if(win)tdB.innerHTML=`<div class="bl">Vent. ${win.l}</div><div class="bm">máx ${win.m} pers.</div>`;
+    tr.appendChild(tdB);
     body.appendChild(tr);
   });
 
@@ -724,11 +869,26 @@ function openCfg(){
   if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
   cfgWeekStart=wkMon(view==="week"?wkStart:cursor);
   fillCfgBody();
+  cfgSwitchTab("turnos");
   document.getElementById("mov").style.display="block";
   document.body.style.overflow="hidden";
 }
 function cfgPrevWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()-7);fillCfgBody();}
 function cfgNextWk(){cfgWeekStart.setDate(cfgWeekStart.getDate()+7);fillCfgBody();}
+
+/* ── TABS DEL MODAL DE CONFIGURAR ── */
+let cfgActiveTab="turnos";
+function cfgSwitchTab(tab){
+  cfgActiveTab=tab;
+  document.getElementById("cfgtab-turnos").className="cfgtab"+(tab==="turnos"?" on":"");
+  document.getElementById("cfgtab-breaks").className="cfgtab"+(tab==="breaks"?" on":"");
+  document.getElementById("cfgpane-turnos").style.display=tab==="turnos"?"":"none";
+  document.getElementById("cfgpane-breaks").style.display=tab==="breaks"?"":"none";
+  document.getElementById("cfg-resetbtn").textContent=tab==="turnos"?"Quitar cambios de esta semana":"Restaurar valores originales";
+  if(tab==="breaks")fillBreaksCfg();
+}
+function cfgSave(){if(cfgActiveTab==="turnos")saveCfg();else saveBreaksCfg();}
+function cfgReset(){if(cfgActiveTab==="turnos")resetCfg();else resetBreaksCfg();}
 function populateSelect(s,value){
   s.innerHTML="";
   SOPTS.forEach(o=>{const op=document.createElement("option");op.value=o.v;op.textContent=o.l;s.appendChild(op);});
@@ -775,6 +935,55 @@ function saveCfg(){
 function resetCfg(){
   if(!confirm("¿Quitar el cambio guardado para esta semana? Va a volver a heredar el horario de la semana configurada anterior."))return;
   weeksCol.doc(isoDate(cfgWeekStart)).delete().catch(err=>alert("No se pudo restaurar: "+err.message));
+  closeCfg();renderGrid();
+}
+
+/* ── CONFIG DE BREAKS ── */
+const BRK_TIMES=(()=>{const arr=[];for(let t=9;t<=21.5;t+=0.5)arr.push(t);return arr;})();
+function fillBreaksCfg(){
+  const body=document.getElementById("brk-body");body.innerHTML="";
+  for(let d=0;d<=6;d++){
+    const tr=document.createElement("tr");
+    const td0=document.createElement("td");td0.style.textAlign="left";td0.style.fontWeight="600";td0.textContent=DAYS_L[d];
+    tr.appendChild(td0);
+    ["A","B","C"].forEach((letter,idx)=>{
+      const win=(BREAKS[d]||[]).find(w=>w.l===letter);
+      const td=document.createElement("td");
+      const wrap=document.createElement("div");wrap.className="brk-win";
+      const sel=document.createElement("select");sel.id=`brk-${d}-${idx}-s`;
+      const optNone=document.createElement("option");optNone.value="";optNone.textContent="—";sel.appendChild(optNone);
+      BRK_TIMES.forEach(t=>{const op=document.createElement("option");op.value=t;op.textContent=hDec2hhmm(t);sel.appendChild(op);});
+      sel.value=win?win.s:"";
+      const endSpan=document.createElement("div");endSpan.className="brk-end";endSpan.id=`brk-${d}-${idx}-end`;
+      const inpM=document.createElement("input");inpM.type="number";inpM.min="1";inpM.max="5";inpM.id=`brk-${d}-${idx}-m`;
+      inpM.value=win?win.m:1;inpM.placeholder="máx";
+      const updEnd=()=>{const v=sel.value;endSpan.textContent=v?`→ ${hDec2hhmm(parseFloat(v)+0.5)}`:"";};
+      sel.onchange=updEnd;updEnd();
+      wrap.appendChild(sel);wrap.appendChild(endSpan);wrap.appendChild(inpM);
+      td.appendChild(wrap);tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  }
+}
+function saveBreaksCfg(){
+  const newBreaks={};
+  for(let d=0;d<=6;d++){
+    newBreaks[d]=[];
+    ["A","B","C"].forEach((letter,idx)=>{
+      const sel=document.getElementById(`brk-${d}-${idx}-s`);
+      const inpM=document.getElementById(`brk-${d}-${idx}-m`);
+      if(sel&&sel.value){
+        const m=Math.max(1,Math.min(5,parseInt(inpM.value,10)||1));
+        newBreaks[d].push({l:letter,s:parseFloat(sel.value),m});
+      }
+    });
+  }
+  breaksDoc.set(newBreaks).catch(err=>alert("No se pudo guardar: "+err.message));
+  closeCfg();renderGrid();
+}
+function resetBreaksCfg(){
+  if(!confirm("¿Restaurar los breaks a los valores originales?"))return;
+  breaksDoc.delete().catch(err=>alert("No se pudo restaurar: "+err.message));
   closeCfg();renderGrid();
 }
 
@@ -880,7 +1089,7 @@ function removeTurno(v){
 }
 
 /* ── INIT ── */
-setView("week");loadCfg();loadTurnos();tick();
+setView("week");loadCfg();loadTurnos();loadBreaks();loadInfo();tick();
 setInterval(()=>{tick();renderGrid();},30000);
 </script>
 </body>
