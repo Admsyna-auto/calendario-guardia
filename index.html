@@ -150,13 +150,33 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .cfgtabs{display:flex;gap:6px;margin-bottom:14px}
 .cfgtab{flex:1;background:#F5F7FA;border:none;border-radius:7px;padding:8px;cursor:pointer;font-size:12px;font-weight:600;color:#8A92A6}
 .cfgtab.on{background:var(--brand);color:#fff}
-.brk-t{width:100%;border-collapse:collapse}
-.brk-t th{padding:5px 3px;font-size:9px;font-weight:700;color:#9199A8;text-align:center;border-bottom:1.5px solid #EAEDF0;text-transform:uppercase}
-.brk-t td{padding:5px 4px;vertical-align:middle;text-align:center}
-.brk-win{display:flex;flex-direction:column;gap:3px;align-items:center}
-.brk-win select{width:100%;padding:3px 2px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:10px}
-.brk-win .brk-end{font-size:9px;color:#8A92A6}
-.brk-win input{width:44px;padding:3px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:10px;text-align:center}
+.brk-day{margin-bottom:16px}
+.brk-daytitle{font-weight:700;font-size:12px;color:#2D3142;margin-bottom:6px}
+.brk-winrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;background:#F8FAFB;border-radius:7px;padding:6px 8px}
+.brk-winlbl{font-size:10px;font-weight:700;color:#8A92A6;width:56px;flex-shrink:0}
+.brk-winrow select{padding:4px 6px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:11px}
+.brk-winrow .brk-end{font-size:10px;color:#8A92A6;width:70px}
+.brk-winrow input{width:48px;padding:4px;border:1.5px solid #D5D9E0;border-radius:5px;font-size:11px;text-align:center}
+.brk-winrow .brk-mlbl{font-size:10px;color:#8A92A6}
+.brk-addbtn{background:none;border:1.5px dashed #D5D9E0;color:var(--brand-d);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:600}
+.brk-addbtn:hover{background:#F0FDF9}
+
+/* MÉTRICAS DASHBOARD */
+.mfilters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:14px 0;background:#F8FAFB;border-radius:9px;padding:10px 12px}
+.mfilters input[type=date]{padding:6px 8px;border:1.5px solid #D5D9E0;border-radius:6px;font-size:12px}
+.mchart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.mchart-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:10px;padding:12px}
+.mchart-title{font-size:10px;font-weight:700;color:var(--text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.mbar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.mbar-lbl{width:110px;flex-shrink:0;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbar-track{flex:1;height:14px;background:#E9ECEF;border-radius:4px;overflow:hidden}
+.mbar-fill{height:100%;border-radius:4px}
+.mbar-val{width:34px;text-align:right;color:var(--text-secondary);font-size:10px}
+.mdonut-wrap{display:flex;align-items:center;gap:16px}
+.mdonut{width:110px;height:110px;border-radius:50%;flex-shrink:0}
+.mdonut-leg{font-size:11px}
+.mdonut-leg div{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.mdonut-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 
 /* MONTH VIEW */
 .mgrid-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
@@ -265,7 +285,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.3</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.4</div>
 </div>
 
 <div class="info-box">
@@ -307,13 +327,8 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
         </div>
       </div>
       <div id="cfgpane-breaks" style="display:none">
-        <div class="cfg-info">Ventanas de break de 30 minutos por día. Hasta 3 ventanas (A, B, C), con máximo de personas simultáneas. Dejá "—" para deshabilitar una ventana.</div>
-        <div style="overflow-x:auto">
-          <table class="brk-t">
-            <thead><tr><th style="text-align:left">Día</th><th>Ventana A</th><th>Ventana B</th><th>Ventana C</th></tr></thead>
-            <tbody id="brk-body"></tbody>
-          </table>
-        </div>
+        <div class="cfg-info">Ventanas de break de 30 minutos por día, con máximo de personas simultáneas. Agregá los que necesites por día.</div>
+        <div id="brk-body"></div>
       </div>
     </div>
     <div class="mft">
@@ -407,9 +422,9 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 
 <!-- MÉTRICAS MODAL -->
 <div class="mov" id="movMetrics" onclick="if(event.target.id==='movMetrics')closeMetrics()">
-  <div class="modal" style="max-width:900px">
+  <div class="modal" style="max-width:1120px">
     <div class="mhdr">
-      <div style="flex:1"><h2>Métricas de casos</h2><p>Datos históricos de la planilla de casos, por agente</p></div>
+      <div style="flex:1"><h2>Métricas de casos</h2><p>Dashboard histórico de la planilla de casos</p></div>
       <button class="mc" onclick="closeMetrics()">&#215;</button>
     </div>
     <div class="mbody">
@@ -419,11 +434,31 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
         <button class="bsv" onclick="saveMetricsUrl()">Guardar URL</button>
         <button class="bcn" onclick="refreshMetrics()">&#8635; Actualizar</button>
       </div>
-      <div id="metrics-summary" class="dash" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;display:none">
-        <div class="dash-card"><div class="dash-val" id="mt-total">—</div><div class="dash-lbl">Casos totales</div></div>
-        <div class="dash-card"><div class="dash-val" id="mt-week">—</div><div class="dash-lbl">Prom. semanal</div></div>
-        <div class="dash-card"><div class="dash-val" id="mt-bot">—</div><div class="dash-lbl">% resuelto por bot</div></div>
+
+      <div class="mfilters">
+        <div class="fg2"><label>Desde</label><input type="date" id="mt-from"></div>
+        <div class="fg2"><label>Hasta</label><input type="date" id="mt-to"></div>
+        <button class="bsv" onclick="applyMetricsFilters()">Aplicar</button>
+        <button class="bcn" onclick="metricsFullYear()">Año completo</button>
+        <div class="fg2" style="min-width:170px"><label>Usuario</label><select id="mt-user"><option value="">Todos</option></select></div>
       </div>
+
+      <div id="metrics-kpis" class="dash" style="grid-template-columns:repeat(6,1fr);margin-bottom:14px;display:none">
+        <div class="dash-card"><div class="dash-val" id="mt-total">—</div><div class="dash-lbl">Total casos</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-in">—</div><div class="dash-lbl">Resolved In</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-out">—</div><div class="dash-lbl">Resolved Out</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-slapct">—</div><div class="dash-lbl">% SLA cumplido</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-agents">—</div><div class="dash-lbl">Agentes activos</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-week">—</div><div class="dash-lbl">Prom. semanal</div></div>
+      </div>
+
+      <div class="mchart-grid" id="metrics-charts" style="display:none">
+        <div class="mchart-card"><div class="mchart-title">Casos por agente</div><div id="mchart-agents"></div></div>
+        <div class="mchart-card"><div class="mchart-title">Casos por prioridad</div><div id="mchart-priority"></div></div>
+        <div class="mchart-card"><div class="mchart-title">Top 10 — horas con más casos</div><div id="mchart-hours"></div></div>
+        <div class="mchart-card"><div class="mchart-title">Distribución SLA</div><div id="mchart-sla"></div></div>
+      </div>
+
       <div style="overflow-x:auto">
         <table class="cfg-t">
           <thead><tr>
@@ -663,7 +698,8 @@ function cancelInfo(){
 }
 
 /* ── MÉTRICAS DE CASOS (Google Sheet publicada como CSV) ── */
-let METRICS_URL="", metricsSynced=false, metricsSummary=null;
+let METRICS_URL="", metricsSynced=false, metricsSummary=null, metricsFiltered=null;
+let metricsAllRows=[], metricsHeaders=[], metricsIdx={};
 function loadMetricsConfig(){
   metricsDoc.onSnapshot(snap=>{
     METRICS_URL=snap.exists?(snap.data().url||""):"";
@@ -706,6 +742,44 @@ function fmtSecs(s){
   const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
   return h>0?`${h}h ${pad(m)}m`:`${m}:${pad(sec)}`;
 }
+function computeMetricsForRows(rows){
+  const{iUser,iFRT,iAHT,iBot,iCreadas,iSLA,iPrio}=metricsIdx;
+  const byUser={}, bySLA={}, byPrio={};
+  let total=0, botYes=0, botTotal=0;
+  const weekCounts={}, hourCounts=new Array(24).fill(0);
+  rows.forEach(row=>{
+    if(!row||row.length<2)return;
+    const user=(iUser>=0?row[iUser]:"").trim()||"[Sin usuario]";
+    if(!byUser[user])byUser[user]={casos:0,frtSum:0,frtN:0,ahtSum:0,ahtN:0,botYes:0,botN:0};
+    const u=byUser[user];
+    u.casos++;total++;
+    if(iFRT>=0){const v=parseFloat(row[iFRT]);if(!isNaN(v)){u.frtSum+=v;u.frtN++;}}
+    if(iAHT>=0){const v=parseFloat(row[iAHT]);if(!isNaN(v)){u.ahtSum+=v;u.ahtN++;}}
+    if(iBot>=0){const v=(row[iBot]||"").trim().toUpperCase();if(v==="SI"||v==="NO"){u.botN++;botTotal++;if(v==="SI"){u.botYes++;botYes++;}}}
+    if(iSLA>=0){const v=(row[iSLA]||"").trim()||"[Sin dato]";bySLA[v]=(bySLA[v]||0)+1;}
+    if(iPrio>=0){const v=(row[iPrio]||"").trim()||"[Sin dato]";byPrio[v]=(byPrio[v]||0)+1;}
+    if(iCreadas>=0){
+      const d=parseFlexDate(row[iCreadas]);
+      if(d){
+        hourCounts[d.getHours()]++;
+        const wk=isoDate(wkMon(d));
+        weekCounts[wk]=(weekCounts[wk]||0)+1;
+      }
+    }
+  });
+  const weekVals=Object.values(weekCounts);
+  const avgWeek=weekVals.length?Math.round(weekVals.reduce((a,b)=>a+b,0)/weekVals.length):null;
+  let peakHour=null,peakCount=-1;
+  hourCounts.forEach((c,h)=>{if(c>peakCount){peakCount=c;peakHour=h;}});
+  const peakPct=total?((peakCount/total)*100).toFixed(1):null;
+  return{
+    total, avgWeek,
+    peakLabel:peakHour!=null?`${peakHour}-${peakHour+1}h`:null,
+    peakPct,
+    botPct: botTotal?((botYes/botTotal)*100).toFixed(1):null,
+    byUser, bySLA, byPrio, hourCounts
+  };
+}
 async function fetchAndComputeMetrics(url){
   document.getElementById("metrics-info").textContent="Cargando datos…";
   try{
@@ -714,60 +788,109 @@ async function fetchAndComputeMetrics(url){
     const text=await res.text();
     const rows=parseCSV(text);
     if(rows.length<2)throw new Error("La planilla no tiene filas de datos");
-    const headers=rows[0].map(h=>h.trim());
-    const idx=name=>headers.indexOf(name);
-    const iUser=idx("Usuario"), iFRT=idx("Caso: FRT"), iAHT=idx("Caso: AHT"),
-          iBot=idx("Bot Resolved"), iCreadas=idx("Creadas");
-    const byUser={};
-    let total=0, botYes=0, botTotal=0;
-    const weekCounts={}, hourCounts=new Array(24).fill(0);
-    for(let r=1;r<rows.length;r++){
-      const row=rows[r];
-      if(!row||row.length<2)continue;
-      const user=(iUser>=0?row[iUser]:"").trim()||"[Sin usuario]";
-      if(!byUser[user])byUser[user]={casos:0,frtSum:0,frtN:0,ahtSum:0,ahtN:0,botYes:0,botN:0};
-      const u=byUser[user];
-      u.casos++;total++;
-      if(iFRT>=0){const v=parseFloat(row[iFRT]);if(!isNaN(v)){u.frtSum+=v;u.frtN++;}}
-      if(iAHT>=0){const v=parseFloat(row[iAHT]);if(!isNaN(v)){u.ahtSum+=v;u.ahtN++;}}
-      if(iBot>=0){const v=(row[iBot]||"").trim().toUpperCase();if(v==="SI"||v==="NO"){u.botN++;botTotal++;if(v==="SI"){u.botYes++;botYes++;}}}
-      if(iCreadas>=0){
-        const d=parseFlexDate(row[iCreadas]);
-        if(d){
-          hourCounts[d.getHours()]++;
-          const wk=isoDate(wkMon(d));
-          weekCounts[wk]=(weekCounts[wk]||0)+1;
-        }
-      }
-    }
-    const weekVals=Object.values(weekCounts);
-    const avgWeek=weekVals.length?Math.round(weekVals.reduce((a,b)=>a+b,0)/weekVals.length):null;
-    let peakHour=null,peakCount=-1;
-    hourCounts.forEach((c,h)=>{if(c>peakCount){peakCount=c;peakHour=h;}});
-    const peakPct=total?((peakCount/total)*100).toFixed(1):null;
+    metricsHeaders=rows[0].map(h=>h.trim());
+    metricsAllRows=rows.slice(1);
+    const idx=name=>metricsHeaders.indexOf(name);
+    metricsIdx={iUser:idx("Usuario"),iFRT:idx("Caso: FRT"),iAHT:idx("Caso: AHT"),
+      iBot:idx("Bot Resolved"),iCreadas:idx("Creadas"),iSLA:idx("Caso: SLA"),iPrio:idx("Caso: Prioridad")};
 
-    metricsSummary={
-      total, avgWeek,
-      peakLabel:peakHour!=null?`${peakHour}-${peakHour+1}h`:null,
-      peakPct,
-      botPct: botTotal?((botYes/botTotal)*100).toFixed(1):null,
-      byUser
-    };
-    renderMetrics();
+    metricsSummary=computeMetricsForRows(metricsAllRows);
     updateDashFromMetrics();
-    document.getElementById("metrics-info").textContent=`Última carga: ${new Date().toLocaleString("es-AR")} · ${total} casos`;
+
+    const userSel=document.getElementById("mt-user");
+    const curVal=userSel.value;
+    userSel.innerHTML='<option value="">Todos</option>';
+    Object.keys(metricsSummary.byUser).sort().forEach(u=>{
+      const op=document.createElement("option");op.value=u;op.textContent=u;userSel.appendChild(op);
+    });
+    userSel.value=curVal;
+
+    applyMetricsFilters();
+    document.getElementById("metrics-info").textContent=`Última carga: ${new Date().toLocaleString("es-AR")} · ${metricsSummary.total} casos`;
   }catch(err){
     document.getElementById("metrics-info").textContent="No se pudo cargar la planilla: "+err.message;
     console.error("Metrics fetch error:",err);
   }
 }
+function applyMetricsFilters(){
+  if(!metricsAllRows.length)return;
+  const from=document.getElementById("mt-from").value;
+  const to=document.getElementById("mt-to").value;
+  const user=document.getElementById("mt-user").value;
+  const fromD=from?new Date(from+"T00:00:00"):null;
+  const toD=to?new Date(to+"T23:59:59"):null;
+  const{iUser,iCreadas}=metricsIdx;
+  let rows=metricsAllRows;
+  if(fromD||toD){
+    rows=rows.filter(row=>{
+      if(iCreadas<0)return true;
+      const d=parseFlexDate(row[iCreadas]);
+      if(!d)return false;
+      if(fromD&&d<fromD)return false;
+      if(toD&&d>toD)return false;
+      return true;
+    });
+  }
+  if(user){
+    rows=rows.filter(row=>((iUser>=0?row[iUser]:"").trim()||"[Sin usuario]")===user);
+  }
+  metricsFiltered=computeMetricsForRows(rows);
+  renderMetrics();
+}
+function metricsFullYear(){
+  const y=new Date().getFullYear();
+  document.getElementById("mt-from").value=`${y}-01-01`;
+  document.getElementById("mt-to").value=isoDate(new Date());
+  applyMetricsFilters();
+}
+const MCOLORS=["#3ECDB0","#378ADD","#D85A30","#BA7517","#7F77DD","#639922","#C0392B","#8A92A6"];
+function renderBarChart(containerId,data,limit){
+  const el=document.getElementById(containerId);el.innerHTML="";
+  if(!data.length){el.innerHTML='<div style="font-size:11px;color:#8A92A6">Sin datos</div>';return;}
+  const top=data.slice(0,limit);
+  const max=top[0][1]||1;
+  top.forEach(([label,count],i)=>{
+    const pct=Math.round(count/max*100);
+    const row=document.createElement("div");row.className="mbar-row";
+    row.innerHTML=`<div class="mbar-lbl" title="${label}">${label}</div><div class="mbar-track"><div class="mbar-fill" style="width:${pct}%;background:${MCOLORS[i%MCOLORS.length]}"></div></div><div class="mbar-val">${count}</div>`;
+    el.appendChild(row);
+  });
+}
+function renderDonut(containerId,segments){
+  const el=document.getElementById(containerId);el.innerHTML="";
+  const total=segments.reduce((a,s)=>a+s.count,0);
+  if(!total){el.innerHTML='<div style="font-size:11px;color:#8A92A6">Sin datos</div>';return;}
+  let acc=0;
+  const stops=segments.map(s=>{
+    const start=acc/total*360;acc+=s.count;const end=acc/total*360;
+    return `${s.color} ${start}deg ${end}deg`;
+  }).join(",");
+  const wrap=document.createElement("div");wrap.className="mdonut-wrap";
+  wrap.innerHTML=`<div class="mdonut" style="background:conic-gradient(${stops})"></div>
+    <div class="mdonut-leg">${segments.map(s=>`<div><div class="mdonut-dot" style="background:${s.color}"></div>${s.label}: ${((s.count/total)*100).toFixed(1)}% (${s.count})</div>`).join("")}</div>`;
+  el.appendChild(wrap);
+}
 function renderMetrics(){
-  if(!metricsSummary)return;
-  const s=metricsSummary;
-  document.getElementById("metrics-summary").style.display="grid";
+  const s=metricsFiltered;
+  if(!s)return;
+  document.getElementById("metrics-kpis").style.display="grid";
+  document.getElementById("metrics-charts").style.display="grid";
   document.getElementById("mt-total").textContent=s.total;
+  const inCt=s.bySLA["Resolved In"]||0, outCt=s.bySLA["Resolved Out"]||0;
+  document.getElementById("mt-in").textContent=inCt;
+  document.getElementById("mt-out").textContent=outCt;
+  document.getElementById("mt-slapct").textContent=(inCt+outCt)?((inCt/(inCt+outCt))*100).toFixed(1)+"%":"—";
+  document.getElementById("mt-agents").textContent=Object.keys(s.byUser).length;
   document.getElementById("mt-week").textContent=s.avgWeek!=null?s.avgWeek:"—";
-  document.getElementById("mt-bot").textContent=s.botPct!=null?s.botPct+"%":"—";
+
+  renderBarChart("mchart-agents",Object.entries(s.byUser).map(([n,u])=>[n,u.casos]).sort((a,b)=>b[1]-a[1]),8);
+  renderBarChart("mchart-priority",Object.entries(s.byPrio).sort((a,b)=>b[1]-a[1]),8);
+  renderBarChart("mchart-hours",s.hourCounts.map((c,h)=>[`${pad(h)}:00`,c]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),10);
+  renderDonut("mchart-sla",[
+    {label:"Resolved In",count:inCt,color:"#3ECDB0"},
+    {label:"Resolved Out",count:outCt,color:"#D85A30"}
+  ]);
+
   const body=document.getElementById("metrics-body");body.innerHTML="";
   const users=Object.entries(s.byUser).sort((a,b)=>b[1].casos-a[1].casos);
   users.forEach(([name,u])=>{
@@ -789,7 +912,7 @@ function updateDashFromMetrics(){
 }
 function openMetrics(){
   document.getElementById("metrics-url").value=METRICS_URL;
-  if(metricsSummary)renderMetrics();
+  if(metricsFiltered)renderMetrics();
   document.getElementById("movMetrics").style.display="block";
   document.body.style.overflow="hidden";
 }
@@ -928,7 +1051,7 @@ function renderWeek(){
       wins.forEach(w=>{
         const pill=document.createElement("div");
         pill.className="wk-brkpill "+(w.m>=2?"m2":"m1");
-        pill.innerHTML=`&#9749; Vent. ${w.l} &nbsp;${hDec2hhmm(w.s)}–${hDec2hhmm(w.s+0.5)} · máx ${w.m}`;
+        pill.innerHTML=`&#9749; Break ${w.l} &nbsp;${hDec2hhmm(w.s)}–${hDec2hhmm(w.s+0.5)} · máx ${w.m}`;
         brkWrap.appendChild(pill);
       });
       bodyEl.appendChild(brkWrap);
@@ -1014,7 +1137,7 @@ function renderDay(){
     const win=breakForHour(dw,h);
     const tdB=document.createElement("td");
     tdB.className="td-break"+(win?(win.m>=2?" brk2":" brk1"):"");
-    if(win)tdB.innerHTML=`<div class="bl">Vent. ${win.l}</div><div class="bm">máx ${win.m} pers.</div>`;
+    if(win)tdB.innerHTML=`<div class="bl">Break ${win.l}</div><div class="bm">máx ${win.m} pers.</div>`;
     tr.appendChild(tdB);
     body.appendChild(tr);
   });
@@ -1175,43 +1298,45 @@ function resetCfg(){
 
 /* ── CONFIG DE BREAKS ── */
 const BRK_TIMES=(()=>{const arr=[];for(let t=9;t<=21.5;t+=0.5)arr.push(t);return arr;})();
+let cfgBreaksDraft={};
 function fillBreaksCfg(){
+  cfgBreaksDraft={};
+  for(let d=0;d<=6;d++)cfgBreaksDraft[d]=(BREAKS[d]||[]).map(w=>({s:w.s,m:w.m}));
+  renderBreaksCfgUI();
+}
+function renderBreaksCfgUI(){
   const body=document.getElementById("brk-body");body.innerHTML="";
   for(let d=0;d<=6;d++){
-    const tr=document.createElement("tr");
-    const td0=document.createElement("td");td0.style.textAlign="left";td0.style.fontWeight="600";td0.textContent=DAYS_L[d];
-    tr.appendChild(td0);
-    ["A","B","C"].forEach((letter,idx)=>{
-      const win=(BREAKS[d]||[]).find(w=>w.l===letter);
-      const td=document.createElement("td");
-      const wrap=document.createElement("div");wrap.className="brk-win";
-      const sel=document.createElement("select");sel.id=`brk-${d}-${idx}-s`;
-      const optNone=document.createElement("option");optNone.value="";optNone.textContent="—";sel.appendChild(optNone);
+    const dayDiv=document.createElement("div");dayDiv.className="brk-day";
+    dayDiv.innerHTML=`<div class="brk-daytitle">${DAYS_L[d]}</div>`;
+    cfgBreaksDraft[d].forEach((w,idx)=>{
+      const row=document.createElement("div");row.className="brk-winrow";
+      row.innerHTML=`<div class="brk-winlbl">Break ${idx+1}</div>`;
+      const sel=document.createElement("select");
       BRK_TIMES.forEach(t=>{const op=document.createElement("option");op.value=t;op.textContent=hDec2hhmm(t);sel.appendChild(op);});
-      sel.value=win?win.s:"";
-      const endSpan=document.createElement("div");endSpan.className="brk-end";endSpan.id=`brk-${d}-${idx}-end`;
-      const inpM=document.createElement("input");inpM.type="number";inpM.min="1";inpM.max="5";inpM.id=`brk-${d}-${idx}-m`;
-      inpM.value=win?win.m:1;inpM.placeholder="máx";
-      const updEnd=()=>{const v=sel.value;endSpan.textContent=v?`→ ${hDec2hhmm(parseFloat(v)+0.5)}`:"";};
-      sel.onchange=updEnd;updEnd();
-      wrap.appendChild(sel);wrap.appendChild(endSpan);wrap.appendChild(inpM);
-      td.appendChild(wrap);tr.appendChild(td);
+      sel.value=w.s;
+      const endSpan=document.createElement("div");endSpan.className="brk-end";
+      const updEnd=()=>{endSpan.textContent=`→ ${hDec2hhmm(parseFloat(sel.value)+0.5)}`;};
+      sel.onchange=()=>{w.s=parseFloat(sel.value);updEnd();};
+      updEnd();
+      const mlbl=document.createElement("span");mlbl.className="brk-mlbl";mlbl.textContent="máx";
+      const inpM=document.createElement("input");inpM.type="number";inpM.min="1";inpM.max="5";inpM.value=w.m;
+      inpM.onchange=()=>{w.m=Math.max(1,Math.min(5,parseInt(inpM.value,10)||1));inpM.value=w.m;};
+      const delBtn=document.createElement("button");delBtn.className="delbtn";delBtn.textContent="Eliminar";
+      delBtn.onclick=()=>{cfgBreaksDraft[d].splice(idx,1);renderBreaksCfgUI();};
+      row.appendChild(sel);row.appendChild(endSpan);row.appendChild(mlbl);row.appendChild(inpM);row.appendChild(delBtn);
+      dayDiv.appendChild(row);
     });
-    body.appendChild(tr);
+    const addBtn=document.createElement("button");addBtn.className="brk-addbtn";addBtn.textContent="+ Agregar break";
+    addBtn.onclick=()=>{cfgBreaksDraft[d].push({s:WK_AXIS_START,m:1});renderBreaksCfgUI();};
+    dayDiv.appendChild(addBtn);
+    body.appendChild(dayDiv);
   }
 }
 function saveBreaksCfg(){
   const newBreaks={};
   for(let d=0;d<=6;d++){
-    newBreaks[d]=[];
-    ["A","B","C"].forEach((letter,idx)=>{
-      const sel=document.getElementById(`brk-${d}-${idx}-s`);
-      const inpM=document.getElementById(`brk-${d}-${idx}-m`);
-      if(sel&&sel.value){
-        const m=Math.max(1,Math.min(5,parseInt(inpM.value,10)||1));
-        newBreaks[d].push({l:letter,s:parseFloat(sel.value),m});
-      }
-    });
+    newBreaks[d]=cfgBreaksDraft[d].map((w,idx)=>({l:String(idx+1),s:w.s,m:w.m}));
   }
   breaksDoc.set(newBreaks).catch(err=>alert("No se pudo guardar: "+err.message));
   closeCfg();renderGrid();
