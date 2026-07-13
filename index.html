@@ -103,7 +103,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .day-sep{border-left:2px solid #AAAAAA !important}
 
 /* WEEK SWIMLANE */
-.wk-axis{display:flex;margin-left:132px;margin-bottom:6px}
+.wk-axis{display:flex;margin-left:132px;margin-bottom:6px;position:sticky;top:52px;z-index:35;background:var(--surface-0);padding:6px 0 4px}
 .wk-tick{flex:1;font-size:9px;font-family:monospace;color:var(--text-secondary)}
 .wk-tick.now{color:var(--brand);font-weight:500}
 .wk-day{display:flex;border-radius:10px;border:0.5px solid var(--border);margin-bottom:10px;overflow:hidden;background:var(--surface-1)}
@@ -264,7 +264,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.1</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.2</div>
 </div>
 
 <div class="info-box">
