@@ -232,6 +232,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <button class="gear" onclick="openHoras()" title="Horas del mes" aria-label="Horas del mes">&#128202;</button>
     <button class="gear" onclick="openHist()" title="Historial" aria-label="Historial">&#128337;</button>
     <button class="gear" onclick="openTurnos()" title="Turnos" aria-label="Turnos">&#128221;</button>
+    <button class="gear" onclick="openMetrics()" title="Métricas de casos" aria-label="Métricas de casos">&#128200;</button>
     <button class="gear" onclick="openCfg()" title="Configurar" aria-label="Configurar">&#9881;</button>
   </div>
 </header>
@@ -239,8 +240,8 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 <div class="main">
   <div class="dash">
     <div class="dash-card"><div class="dash-ic" style="color:#3ECDB0">&#128101;</div><div class="dash-val" id="dash-active-val">0</div><div class="dash-lbl">Activos ahora</div><div class="dash-sub" id="dash-active-sub"></div></div>
-    <div class="dash-card"><div class="dash-ic" style="color:#378ADD">&#128202;</div><div class="dash-val">459</div><div class="dash-lbl">Casos prom/sem</div><div class="dash-sub">Pico: sáb 17-20h</div></div>
-    <div class="dash-card"><div class="dash-ic" style="color:#D85A30">&#128293;</div><div class="dash-val">18-19h</div><div class="dash-lbl">Hora pico histórica</div><div class="dash-sub">11.7% del volumen diario</div></div>
+    <div class="dash-card"><div class="dash-ic" style="color:#378ADD">&#128202;</div><div class="dash-val" id="dash-cases-val">—</div><div class="dash-lbl">Casos prom/sem</div><div class="dash-sub" id="dash-cases-sub">Sin datos cargados</div></div>
+    <div class="dash-card"><div class="dash-ic" style="color:#D85A30">&#128293;</div><div class="dash-val" id="dash-peak-val">—</div><div class="dash-lbl">Hora pico histórica</div><div class="dash-sub" id="dash-peak-sub">Sin datos cargados</div></div>
     <div class="dash-card"><div class="dash-ic" style="color:#BA7517">&#9749;</div><div class="dash-val" id="dash-brk-val">0</div><div class="dash-lbl">Ventanas hoy</div><div class="dash-sub" id="dash-brk-sub"></div></div>
   </div>
   <div class="vtabs">
@@ -264,7 +265,7 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.2</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.3</div>
 </div>
 
 <div class="info-box">
@@ -404,6 +405,40 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
   </div>
 </div>
 
+<!-- MÉTRICAS MODAL -->
+<div class="mov" id="movMetrics" onclick="if(event.target.id==='movMetrics')closeMetrics()">
+  <div class="modal" style="max-width:900px">
+    <div class="mhdr">
+      <div style="flex:1"><h2>Métricas de casos</h2><p>Datos históricos de la planilla de casos, por agente</p></div>
+      <button class="mc" onclick="closeMetrics()">&#215;</button>
+    </div>
+    <div class="mbody">
+      <div class="cfg-info" id="metrics-info">Configurá la URL de la Google Sheet publicada como CSV para ver las métricas.</div>
+      <div class="turnos-new">
+        <div class="fg2" style="flex:1"><label>URL del CSV publicado</label><input type="text" id="metrics-url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" style="width:100%"></div>
+        <button class="bsv" onclick="saveMetricsUrl()">Guardar URL</button>
+        <button class="bcn" onclick="refreshMetrics()">&#8635; Actualizar</button>
+      </div>
+      <div id="metrics-summary" class="dash" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;display:none">
+        <div class="dash-card"><div class="dash-val" id="mt-total">—</div><div class="dash-lbl">Casos totales</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-week">—</div><div class="dash-lbl">Prom. semanal</div></div>
+        <div class="dash-card"><div class="dash-val" id="mt-bot">—</div><div class="dash-lbl">% resuelto por bot</div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cfg-t">
+          <thead><tr>
+            <th class="thp">Usuario</th><th class="thh">Casos</th><th class="thh">FRT prom.</th><th class="thh">AHT prom.</th><th class="thh">% Bot</th>
+          </tr></thead>
+          <tbody id="metrics-body"><tr><td colspan="5" style="text-align:center;color:#8A92A6;padding:16px">Sin datos todavía.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="bcn" onclick="closeMetrics()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ── DATOS ── */
 const DEFAULTS={
@@ -533,6 +568,7 @@ const weeksCol=db.collection("weeks");
 const turnosCol=db.collection("turnos");
 const breaksDoc=db.collection("config").doc("breaks");
 const infoDoc=db.collection("config").doc("info");
+const metricsDoc=db.collection("config").doc("metricsSheet");
 
 /* ── CARGA DE SEMANAS (Firestore, tiempo real) ── */
 function loadCfg(){
@@ -624,6 +660,150 @@ function saveInfo(){
 function cancelInfo(){
   infoEditing=false;
   renderInfoView();
+}
+
+/* ── MÉTRICAS DE CASOS (Google Sheet publicada como CSV) ── */
+let METRICS_URL="", metricsSynced=false, metricsSummary=null;
+function loadMetricsConfig(){
+  metricsDoc.onSnapshot(snap=>{
+    METRICS_URL=snap.exists?(snap.data().url||""):"";
+    metricsSynced=true;
+    if(METRICS_URL)fetchAndComputeMetrics(METRICS_URL);
+  },err=>{console.error("Firestore error:",err);});
+}
+function parseCSV(text){
+  const rows=[];let row=[],field="",inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQuotes){
+      if(c==='"'){
+        if(text[i+1]==='"'){field+='"';i++;}else{inQuotes=false;}
+      }else field+=c;
+    }else{
+      if(c==='"')inQuotes=true;
+      else if(c===','){row.push(field);field="";}
+      else if(c==='\r'){/* skip */}
+      else if(c==='\n'){row.push(field);rows.push(row);row=[];field="";}
+      else field+=c;
+    }
+  }
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows;
+}
+function parseFlexDate(s){
+  if(!s)return null;
+  s=s.trim();if(!s)return null;
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));
+  m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+function fmtSecs(s){
+  if(s==null||isNaN(s))return "—";
+  s=Math.round(s);
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return h>0?`${h}h ${pad(m)}m`:`${m}:${pad(sec)}`;
+}
+async function fetchAndComputeMetrics(url){
+  document.getElementById("metrics-info").textContent="Cargando datos…";
+  try{
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const text=await res.text();
+    const rows=parseCSV(text);
+    if(rows.length<2)throw new Error("La planilla no tiene filas de datos");
+    const headers=rows[0].map(h=>h.trim());
+    const idx=name=>headers.indexOf(name);
+    const iUser=idx("Usuario"), iFRT=idx("Caso: FRT"), iAHT=idx("Caso: AHT"),
+          iBot=idx("Bot Resolved"), iCreadas=idx("Creadas");
+    const byUser={};
+    let total=0, botYes=0, botTotal=0;
+    const weekCounts={}, hourCounts=new Array(24).fill(0);
+    for(let r=1;r<rows.length;r++){
+      const row=rows[r];
+      if(!row||row.length<2)continue;
+      const user=(iUser>=0?row[iUser]:"").trim()||"[Sin usuario]";
+      if(!byUser[user])byUser[user]={casos:0,frtSum:0,frtN:0,ahtSum:0,ahtN:0,botYes:0,botN:0};
+      const u=byUser[user];
+      u.casos++;total++;
+      if(iFRT>=0){const v=parseFloat(row[iFRT]);if(!isNaN(v)){u.frtSum+=v;u.frtN++;}}
+      if(iAHT>=0){const v=parseFloat(row[iAHT]);if(!isNaN(v)){u.ahtSum+=v;u.ahtN++;}}
+      if(iBot>=0){const v=(row[iBot]||"").trim().toUpperCase();if(v==="SI"||v==="NO"){u.botN++;botTotal++;if(v==="SI"){u.botYes++;botYes++;}}}
+      if(iCreadas>=0){
+        const d=parseFlexDate(row[iCreadas]);
+        if(d){
+          hourCounts[d.getHours()]++;
+          const wk=isoDate(wkMon(d));
+          weekCounts[wk]=(weekCounts[wk]||0)+1;
+        }
+      }
+    }
+    const weekVals=Object.values(weekCounts);
+    const avgWeek=weekVals.length?Math.round(weekVals.reduce((a,b)=>a+b,0)/weekVals.length):null;
+    let peakHour=null,peakCount=-1;
+    hourCounts.forEach((c,h)=>{if(c>peakCount){peakCount=c;peakHour=h;}});
+    const peakPct=total?((peakCount/total)*100).toFixed(1):null;
+
+    metricsSummary={
+      total, avgWeek,
+      peakLabel:peakHour!=null?`${peakHour}-${peakHour+1}h`:null,
+      peakPct,
+      botPct: botTotal?((botYes/botTotal)*100).toFixed(1):null,
+      byUser
+    };
+    renderMetrics();
+    updateDashFromMetrics();
+    document.getElementById("metrics-info").textContent=`Última carga: ${new Date().toLocaleString("es-AR")} · ${total} casos`;
+  }catch(err){
+    document.getElementById("metrics-info").textContent="No se pudo cargar la planilla: "+err.message;
+    console.error("Metrics fetch error:",err);
+  }
+}
+function renderMetrics(){
+  if(!metricsSummary)return;
+  const s=metricsSummary;
+  document.getElementById("metrics-summary").style.display="grid";
+  document.getElementById("mt-total").textContent=s.total;
+  document.getElementById("mt-week").textContent=s.avgWeek!=null?s.avgWeek:"—";
+  document.getElementById("mt-bot").textContent=s.botPct!=null?s.botPct+"%":"—";
+  const body=document.getElementById("metrics-body");body.innerHTML="";
+  const users=Object.entries(s.byUser).sort((a,b)=>b[1].casos-a[1].casos);
+  users.forEach(([name,u])=>{
+    const tr=document.createElement("tr");
+    const frt=u.frtN?fmtSecs(u.frtSum/u.frtN):"—";
+    const aht=u.ahtN?fmtSecs(u.ahtSum/u.ahtN):"—";
+    const bot=u.botN?((u.botYes/u.botN)*100).toFixed(1)+"%":"—";
+    tr.innerHTML=`<td class="tdp">${name}</td><td class="tdh">${u.casos}</td><td class="tdh">${frt}</td><td class="tdh">${aht}</td><td class="tdh">${bot}</td>`;
+    body.appendChild(tr);
+  });
+}
+function updateDashFromMetrics(){
+  if(!metricsSummary)return;
+  const s=metricsSummary;
+  document.getElementById("dash-cases-val").textContent=s.avgWeek!=null?s.avgWeek:"—";
+  document.getElementById("dash-cases-sub").textContent=`Total histórico: ${s.total}`;
+  document.getElementById("dash-peak-val").textContent=s.peakLabel||"—";
+  document.getElementById("dash-peak-sub").textContent=s.peakPct!=null?`${s.peakPct}% del volumen`:"";
+}
+function openMetrics(){
+  document.getElementById("metrics-url").value=METRICS_URL;
+  if(metricsSummary)renderMetrics();
+  document.getElementById("movMetrics").style.display="block";
+  document.body.style.overflow="hidden";
+}
+function closeMetrics(){document.getElementById("movMetrics").style.display="none";document.body.style.overflow="";}
+function saveMetricsUrl(){
+  const pw=prompt("Ingresá la contraseña para configurar la planilla:");
+  if(pw===null)return;
+  if(pw!==CFG_PASS){alert("Contraseña incorrecta.");return;}
+  const url=document.getElementById("metrics-url").value.trim();
+  metricsDoc.set({url}).catch(err=>alert("No se pudo guardar: "+err.message));
+}
+function refreshMetrics(){
+  if(!METRICS_URL){alert("Todavía no hay una URL configurada.");return;}
+  fetchAndComputeMetrics(METRICS_URL);
 }
 
 /* ── VIEW SWITCH ── */
@@ -1144,7 +1324,7 @@ function removeTurno(v){
 }
 
 /* ── INIT ── */
-setView("week");loadCfg();loadTurnos();loadBreaks();loadInfo();tick();renderDash();
+setView("week");loadCfg();loadTurnos();loadBreaks();loadInfo();loadMetricsConfig();tick();renderDash();
 setInterval(()=>{tick();renderGrid();renderDash();},30000);
 </script>
 </body>
