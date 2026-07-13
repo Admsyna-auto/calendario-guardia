@@ -6,6 +6,7 @@
 <title>Guardia Administrativa · Riiing</title>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#EEF1F5;min-height:100vh}
@@ -161,6 +162,35 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 .brk-addbtn{background:none;border:1.5px dashed #D5D9E0;color:var(--brand-d);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:600}
 .brk-addbtn:hover{background:#F0FDF9}
 
+/* ANALÍTICA */
+.an-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.an-kpi{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:14px}
+.an-kpi-ic{font-size:16px;margin-bottom:4px}
+.an-kpi-val{font-size:24px;font-weight:600}
+.an-kpi-lbl{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.an-kpi-sub{font-size:9px;color:var(--text-muted);margin-top:3px}
+.an-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.an-card{background:var(--surface-2);border-radius:12px;padding:16px;border:0.5px solid var(--border)}
+.an-card.full{grid-column:1/-1}
+.an-card h3{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:2px}
+.an-card .an-sub{font-size:10px;color:var(--text-secondary);margin-bottom:10px}
+.an-card .an-note{font-size:10px;color:var(--text-muted);margin-top:8px}
+.an-card canvas{max-height:220px}
+.an-card canvas.tall{max-height:300px}
+@media (max-width:600px){.an-grid,.an-kpis{grid-template-columns:1fr}}
+.an-heat{display:grid;grid-template-columns:44px repeat(7,1fr);gap:2px;font-size:9px}
+.an-heat .hh{text-align:right;padding-right:4px;color:var(--text-secondary);display:flex;align-items:center;justify-content:flex-end}
+.an-heat .hd{text-align:center;font-weight:700;color:var(--text-secondary);padding-bottom:3px}
+.an-heat .hc{aspect-ratio:1.4;border-radius:3px;display:flex;align-items:center;justify-content:center;color:#2D3142;font-weight:600}
+.an-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.an-tbl th{text-align:left;padding:6px 8px;font-size:9px;text-transform:uppercase;color:var(--text-secondary);border-bottom:1.5px solid var(--border)}
+.an-tbl td{padding:7px 8px;border-bottom:0.5px solid var(--border)}
+.an-agent-pill{display:inline-block;padding:2px 8px;border-radius:5px;font-weight:600;font-size:10px}
+.an-funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.an-funnel-lbl{width:110px;font-size:11px;color:var(--text-primary);flex-shrink:0}
+.an-funnel-bar{height:22px;border-radius:5px;display:flex;align-items:center}
+.an-funnel-val{font-size:11px;color:var(--text-secondary);margin-left:8px;white-space:nowrap}
+
 /* MÉTRICAS DASHBOARD */
 .mfilters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:14px 0;background:#F8FAFB;border-radius:9px;padding:10px 12px}
 .mfilters input[type=date]{padding:6px 8px;border:1.5px solid #D5D9E0;border-radius:6px;font-size:12px}
@@ -268,8 +298,9 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <button class="vtab" id="vtab-day" onclick="setView('day')">Día</button>
     <button class="vtab" id="vtab-week" onclick="setView('week')">Semana</button>
     <button class="vtab" id="vtab-month" onclick="setView('month')">Mes</button>
+    <button class="vtab" id="vtab-analytics" onclick="setView('analytics')">Analítica</button>
   </div>
-  <div class="wnav">
+  <div class="wnav" id="wnavBar">
     <button class="nb" onclick="navPrev()">&#8249;</button>
     <div class="wlbl"><div class="wm" id="wlbl"></div><div class="ws" id="wsub"></div></div>
     <button class="hb" id="btn-hoy" onclick="goToday()">Hoy</button>
@@ -284,8 +315,9 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <div class="mgrid-wk"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
     <div class="mgrid" id="mgrid"></div>
   </div>
+  <div id="analyticsWrap" style="display:none"></div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.4</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.5</div>
 </div>
 
 <div class="info-box">
@@ -935,10 +967,14 @@ function setView(v){
   document.getElementById("vtab-day").className="vtab"+(v==="day"?" on":"");
   document.getElementById("vtab-week").className="vtab"+(v==="week"?" on":"");
   document.getElementById("vtab-month").className="vtab"+(v==="month"?" on":"");
+  document.getElementById("vtab-analytics").className="vtab"+(v==="analytics"?" on":"");
   document.getElementById("gridWrap").style.display=v==="day"?"":"none";
   document.getElementById("weekSwim").style.display=v==="week"?"":"none";
   document.getElementById("monthWrap").style.display=v==="month"?"":"none";
-  document.getElementById("leg").style.display=v==="month"?"none":"";
+  document.getElementById("analyticsWrap").style.display=v==="analytics"?"":"none";
+  document.getElementById("wnavBar").style.display=v==="analytics"?"none":"";
+  document.getElementById("leg").style.display=(v==="month"||v==="analytics")?"none":"";
+  if(v==="analytics"){renderAnalytics();return;}
   renderGrid();
 }
 function navPrev(){
@@ -1446,6 +1482,212 @@ function createTurno(){
 function removeTurno(v){
   if(!confirm("¿Eliminar este turno de la lista? Las celdas que ya lo tengan asignado no se modifican."))return;
   deleteTurno(v);
+}
+
+/* ── ANALÍTICA (datos históricos mar–jul 2026, ya procesados) ── */
+const ANALYTICS={
+  casos_hora:{"9":267,"10":592,"11":744,"12":815,"13":662,"14":551,"15":658,"16":694,"17":885,"18":1022,"19":1046,"20":830,"21":362},
+  casos_dia:{"Lun":1418,"Mar":1343,"Mié":1295,"Jue":1333,"Vie":1254,"Sáb":1561,"Dom":968},
+  sem_trend:[{sem:10,casos:484},{sem:11,casos:575},{sem:12,casos:514},{sem:13,casos:452},{sem:14,casos:465},{sem:15,casos:509},{sem:16,casos:457},{sem:17,casos:455},{sem:18,casos:382},{sem:19,casos:397},{sem:20,casos:563},{sem:21,casos:479},{sem:22,casos:470},{sem:23,casos:479},{sem:24,casos:510},{sem:25,casos:575},{sem:26,casos:460},{sem:27,casos:409},{sem:28,casos:491}],
+  heatmap:{"0-9":44,"0-10":101,"0-11":126,"0-12":116,"0-13":107,"0-14":91,"0-15":85,"0-16":114,"0-17":131,"0-18":159,"0-19":166,"0-20":114,"0-21":61,
+    "1-9":38,"1-10":90,"1-11":97,"1-12":126,"1-13":110,"1-14":63,"1-15":87,"1-16":97,"1-17":148,"1-18":160,"1-19":147,"1-20":126,"1-21":49,
+    "2-9":38,"2-10":88,"2-11":95,"2-12":118,"2-13":64,"2-14":79,"2-15":109,"2-16":97,"2-17":108,"2-18":161,"2-19":169,"2-20":124,"2-21":40,
+    "3-9":59,"3-10":109,"3-11":112,"3-12":125,"3-13":85,"3-14":80,"3-15":84,"3-16":80,"3-17":137,"3-18":153,"3-19":143,"3-20":125,"3-21":29,
+    "4-9":39,"4-10":83,"4-11":112,"4-12":95,"4-13":90,"4-14":78,"4-15":97,"4-16":113,"4-17":122,"4-18":118,"4-19":157,"4-20":100,"4-21":44,
+    "5-9":42,"5-10":82,"5-11":138,"5-12":154,"5-13":142,"5-14":86,"5-15":98,"5-16":102,"5-17":150,"5-18":172,"5-19":161,"5-20":147,"5-21":76,
+    "6-9":7,"6-10":39,"6-11":64,"6-12":81,"6-13":64,"6-14":74,"6-15":98,"6-16":91,"6-17":89,"6-18":99,"6-19":103,"6-20":94,"6-21":63},
+  categorias:[{cat:"Cambio distinto producto",n:1828,pct:19.9},{cat:"Cambio mismo producto",n:1263,pct:13.8},{cat:"Devolución de producto",n:1156,pct:12.6},
+    {cat:"Autorización préstamos",n:877,pct:9.6},{cat:"Consulta de gestiones",n:843,pct:9.2},{cat:"Facturación/Refact.",n:673,pct:7.3},
+    {cat:"Autorización transf.",n:596,pct:6.5},{cat:"Medios de pago",n:427,pct:4.7},{cat:"Sin respuesta de local",n:267,pct:2.9},{cat:"Problemas al facturar",n:186,pct:2.0}],
+  sla:{"Resolved In":4549,"Resolved Out":4787},
+  sla_cat:[{cat:"Cambio distinto prod.",in:41.5,out:58.5},{cat:"Cambio mismo prod.",in:60.6,out:39.4},{cat:"Devolución",in:51.0,out:49.0},
+    {cat:"Autor. préstamos",in:64.7,out:35.3},{cat:"Consulta gestiones",in:45.1,out:54.9},{cat:"Facturación/Refact.",in:48.6,out:51.4}],
+  errores:[{causa:"Falta de respuesta",n:292},{causa:"Cruce de IMEI",n:172},{causa:"Error al ingresar bot",n:90},{causa:"Error cobro/pago",n:72},
+    {causa:"No sabe hacer NC",n:60},{causa:"No envía documentación",n:43},{causa:"No sabe medios de pago",n:17}],
+  agentes:[{nombre:"Yazmin",casos:2116,casos_sem:105.8,ht_avg:26.9,frt_avg:108,ttc_avg:82.5,sla_pct:40.0},
+    {nombre:"Franco",casos:2006,casos_sem:100.3,ht_avg:24.3,frt_avg:117,ttc_avg:77.3,sla_pct:43.5},
+    {nombre:"Martina",casos:1689,casos_sem:88.9,ht_avg:15.5,frt_avg:74,ttc_avg:56.3,sla_pct:56.7},
+    {nombre:"Ana",casos:1687,casos_sem:93.7,ht_avg:14.7,frt_avg:98,ttc_avg:43.9,sla_pct:58.7},
+    {nombre:"Victoria",casos:1674,casos_sem:88.1,ht_avg:17.5,frt_avg:81,ttc_avg:60.9,sla_pct:49.5}],
+  agente_colors:{Yazmin:"#93C47D",Franco:"#F5C4B3",Martina:"#FAC775",Ana:"#B5D4F4",Victoria:"#CECBF6"},
+  sucursales:[{suc:"Local Nuevo Centro 2",n:149},{suc:"Alto Palermo",n:146},{suc:"Libertad Tucumán",n:144},{suc:"Salta Alberdi",n:143},
+    {suc:"Quilmes",n:143},{suc:"Portal Salta",n:141},{suc:"Neuquén Patagonia",n:141},{suc:"Walmart Talleres",n:133},
+    {suc:"Portal Brown",n:132},{suc:"San Juan",n:130},{suc:"Libertad Lugones",n:130},{suc:"Libertad Salta",n:129},
+    {suc:"SM BS AS Tomás",n:128},{suc:"Santiago Libertad",n:122},{suc:"Libertad Ruta 9",n:120}],
+  bot:{activo:9336,asistido:6153,resuelto:1},
+  msg_cat:[{cat:"Cambio distinto prod.",avg_msg:48.2,avg_ht:21.1},{cat:"Cambio mismo prod.",avg_msg:43.8,avg_ht:12.5},
+    {cat:"Devolución",avg_msg:46.1,avg_ht:19.5},{cat:"Autor. préstamos",avg_msg:32.7,avg_ht:12.6},{cat:"Consulta gestiones",avg_msg:45.2,avg_ht:23.9}],
+  meses:[{mes:"Mar",casos:2206},{mes:"Abr",casos:2004},{mes:"May",casos:2038},{mes:"Jun",casos:2148},{mes:"Jul",casos:776}],
+  kpis:{total_casos:9172,semanas:20,sla_in_pct:48.7,frt_avg_seg:95,ttc_p50_min:32,ttc_p90_min:114,ht_avg_min:20.6,mensajes_avg:43.1,bot_resolve_pct:0.01,errores_vendedor_pct:9.8}
+};
+let analyticsRendered=false;
+const endLabelPlugin={
+  id:"endLabel",
+  afterDatasetsDraw(chart,args,opts){
+    const{ctx}=chart;
+    chart.data.datasets.forEach((ds,dsIndex)=>{
+      const meta=chart.getDatasetMeta(dsIndex);
+      if(meta.hidden||ds.hideLabels)return;
+      meta.data.forEach((bar,i)=>{
+        const label=(opts&&opts.labels&&opts.labels[i]!==undefined)?opts.labels[i]:ds.data[i];
+        ctx.save();ctx.fillStyle="#4A4F5C";ctx.font="600 10px sans-serif";ctx.textAlign="left";ctx.textBaseline="middle";
+        ctx.fillText(String(label),bar.x+6,bar.y);ctx.restore();
+      });
+    });
+  }
+};
+function refLinePlugin(xVal,color){
+  return{id:"refLine",afterDraw(chart){
+    const{ctx,chartArea,scales}=chart;
+    const xPix=scales.x.getPixelForValue(xVal);
+    ctx.save();ctx.strokeStyle=color;ctx.setLineDash([5,5]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(xPix,chartArea.top);ctx.lineTo(xPix,chartArea.bottom);ctx.stroke();ctx.restore();
+  }};
+}
+function renderAnalytics(){
+  const wrap=document.getElementById("analyticsWrap");
+  if(analyticsRendered){return;}
+  analyticsRendered=true;
+  const A=ANALYTICS,K=A.kpis;
+  wrap.innerHTML=`
+    <div class="an-kpis">
+      <div class="an-kpi"><div class="an-kpi-ic" style="color:#EF4444">&#128202;</div><div class="an-kpi-val" style="color:${K.sla_in_pct<80?'#EF4444':'#3ECDB0'}">${K.sla_in_pct}%</div><div class="an-kpi-lbl">SLA cumplido</div><div class="an-kpi-sub">${(100-K.sla_in_pct).toFixed(1)}% fuera de SLA</div></div>
+      <div class="an-kpi"><div class="an-kpi-ic" style="color:#3ECDB0">&#9200;</div><div class="an-kpi-val" style="color:${K.frt_avg_seg/60<2?'#3ECDB0':'#2D3142'}">${(K.frt_avg_seg/60).toFixed(1)} min</div><div class="an-kpi-lbl">FRT promedio</div><div class="an-kpi-sub">p90: 3.3 min</div></div>
+      <div class="an-kpi"><div class="an-kpi-ic" style="color:#378ADD">&#128337;</div><div class="an-kpi-val">${K.ttc_p50_min} min</div><div class="an-kpi-lbl">Tiempo cierre p50</div><div class="an-kpi-sub">p90: ${K.ttc_p90_min} min</div></div>
+      <div class="an-kpi"><div class="an-kpi-ic" style="color:#EF9F27">&#9749;</div><div class="an-kpi-val" style="color:#EF4444">${K.bot_resolve_pct}%</div><div class="an-kpi-lbl">Bot resolución</div><div class="an-kpi-sub">${K.total_casos.toLocaleString("es-AR")} casos derivados</div></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card"><h3>Volumen por franja horaria (mar–jul 2026)</h3><canvas id="chart-hora"></canvas></div>
+      <div class="an-card"><h3>Heatmap de demanda: día × hora</h3><div id="an-heatmap" class="an-heat"></div></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card"><h3>Tendencia semanal de casos</h3><canvas id="chart-trend"></canvas></div>
+      <div class="an-card"><h3>Casos por día de semana (total período)</h3><canvas id="chart-dow"></canvas></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card"><h3>Top 10 motivos de consulta</h3><canvas id="chart-categorias" class="tall"></canvas><div class="an-note">Cambios + devoluciones = 46% del total</div></div>
+      <div class="an-card"><h3>Cumplimiento de SLA por tipo de caso</h3><canvas id="chart-slacat"></canvas></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card full"><h3>Desempeño individual del equipo</h3><div id="an-agent-table"></div></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card"><h3>Pareto de errores de vendedores</h3><div class="an-sub">${A.errores.reduce((a,e)=>a+e.n,0)} casos = ${K.errores_vendedor_pct}% del total</div><canvas id="chart-errores"></canvas><div class="an-note">Cada barra = un tipo de error capacitable</div></div>
+      <div class="an-card"><h3>Efectividad del bot de atención</h3><div id="an-funnel"></div><div class="an-note">El bot deriva el 100% de los casos al equipo humano. Oportunidad: automatizar las consultas de estado de gestión (843 casos/período).</div></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card full"><h3>Top 15 sucursales por volumen de casos</h3><div class="an-sub">Distribución homogénea — rango 120–149 casos/período</div><canvas id="chart-sucursales" class="tall"></canvas></div>
+    </div>
+    <div class="an-grid">
+      <div class="an-card full"><h3>Complejidad por tipo de caso: mensajes y tiempo de gestión</h3><canvas id="chart-msgcat"></canvas></div>
+    </div>
+  `;
+
+  /* Chart 1: volumen por hora */
+  const horaLabels=Object.keys(A.casos_hora), horaVals=Object.values(A.casos_hora);
+  new Chart(document.getElementById("chart-hora"),{type:"bar",data:{labels:horaLabels.map(h=>h+"h"),datasets:[{data:horaVals,
+    backgroundColor:horaVals.map(v=>v>800?"#EA9999":v>=500?"#FAC775":"#C0DD97")}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+  /* Chart 2: heatmap HTML */
+  const heat=document.getElementById("an-heatmap");
+  const hHours=Array.from({length:13},(_,i)=>i+9);
+  let heatHtml=`<div></div>`+DAYS_L.map(d=>`<div class="hd">${d.slice(0,3)}</div>`).join("");
+  hHours.forEach(h=>{
+    heatHtml+=`<div class="hh">${h}h</div>`;
+    for(let d=0;d<=6;d++){
+      const v=A.heatmap[`${d}-${h}`]||0;
+      const bg=v===0?"var(--surface-0)":v<=60?"var(--surface-0)":v<=100?"#C0DD97":v<=140?"#FAC775":"#EA9999";
+      heatHtml+=`<div class="hc" style="background:${bg}" title="${DAYS_L[d]} ${h}h: ${v}">${v||""}</div>`;
+    }
+  });
+  heat.innerHTML=heatHtml;
+
+  /* Chart 3: tendencia semanal */
+  const avgWeek=Math.round(A.sem_trend.reduce((a,s)=>a+s.casos,0)/A.sem_trend.length);
+  const peakWeeks=[11,25];
+  new Chart(document.getElementById("chart-trend"),{type:"line",data:{
+    labels:A.sem_trend.map(s=>"S"+s.sem),
+    datasets:[
+      {label:"Casos",data:A.sem_trend.map(s=>s.casos),borderColor:"#378ADD",backgroundColor:"rgba(55,138,221,.1)",fill:true,tension:.3,
+        pointBackgroundColor:A.sem_trend.map(s=>peakWeeks.includes(s.sem)?"#EF4444":"#378ADD"),
+        pointRadius:A.sem_trend.map(s=>peakWeeks.includes(s.sem)?6:3)},
+      {label:`Promedio ${avgWeek}`,data:A.sem_trend.map(()=>avgWeek),borderColor:"#9199A8",borderDash:[5,5],pointRadius:0,fill:false}
+    ]},options:{scales:{y:{beginAtZero:true}}}});
+
+  /* Chart 4: casos por día */
+  const dowLabels=Object.keys(A.casos_dia), dowVals=Object.values(A.casos_dia);
+  new Chart(document.getElementById("chart-dow"),{type:"bar",data:{labels:dowLabels,datasets:[{data:dowVals,
+    backgroundColor:dowLabels.map(d=>(d==="Sáb"||d==="Dom")?"#504E86":"#3ECDB0")}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+  /* Chart 5: categorías (horizontal) */
+  new Chart(document.getElementById("chart-categorias"),{type:"bar",data:{
+    labels:A.categorias.map(c=>c.cat),
+    datasets:[{data:A.categorias.map(c=>c.n),backgroundColor:A.categorias.map((c,i)=>i<3?"#EA9999":"#B5D4F4")}]},
+    options:{indexAxis:"y",plugins:{legend:{display:false},endLabel:{labels:A.categorias.map(c=>`${c.n} (${c.pct}%)`)}},
+      scales:{x:{beginAtZero:true}}},plugins:[endLabelPlugin]});
+
+  /* Chart 6: SLA por categoría (stacked horizontal) */
+  new Chart(document.getElementById("chart-slacat"),{type:"bar",data:{
+    labels:A.sla_cat.map(c=>c.cat),
+    datasets:[
+      {label:"Dentro de SLA",data:A.sla_cat.map(c=>c.in),backgroundColor:"#C0DD97"},
+      {label:"Fuera de SLA",data:A.sla_cat.map(c=>c.out),backgroundColor:"#EA9999"}
+    ]},options:{indexAxis:"y",scales:{x:{stacked:true,max:100},y:{stacked:true}}},
+    plugins:[refLinePlugin(80,"#9199A8")]});
+
+  /* Tabla 7: performance por agente */
+  const tbl=document.getElementById("an-agent-table");
+  let tblHtml=`<table class="an-tbl"><thead><tr><th>Agente</th><th>Casos/sem</th><th>HT prom</th><th>FRT prom</th><th>Cierre prom</th><th>SLA In %</th></tr></thead><tbody>`;
+  A.agentes.forEach(ag=>{
+    const rowBg=ag.sla_pct<50?"#FEF2F2":ag.sla_pct>=55?"#F0FAF4":"";
+    const dot=ag.sla_pct<50?"&#128308;":"&#128993;";
+    tblHtml+=`<tr style="background:${rowBg}">
+      <td><span class="an-agent-pill" style="background:${A.agente_colors[ag.nombre]}33;color:#2D3142">${ag.nombre}</span></td>
+      <td>${ag.casos_sem}</td><td>${ag.ht_avg} min</td><td>${ag.frt_avg}s</td><td>${ag.ttc_avg} min</td>
+      <td><strong>${ag.sla_pct.toFixed(1)}%</strong> ${dot}</td></tr>`;
+  });
+  tblHtml+="</tbody></table>";
+  tbl.innerHTML=tblHtml;
+
+  /* Chart 8: Pareto errores */
+  let acc=0;const totalErr=A.errores.reduce((a,e)=>a+e.n,0);
+  const paretoPct=A.errores.map(e=>{acc+=e.n;return+(acc/totalErr*100).toFixed(1);});
+  new Chart(document.getElementById("chart-errores"),{data:{labels:A.errores.map(e=>e.causa),
+    datasets:[
+      {type:"bar",label:"Casos",data:A.errores.map(e=>e.n),backgroundColor:"#F5C4B3",yAxisID:"y"},
+      {type:"line",label:"% acumulado",data:paretoPct,borderColor:"#D85A30",yAxisID:"y1",tension:.2,pointRadius:3},
+      {type:"line",label:"Meta 80%",data:A.errores.map(()=>80),borderColor:"#9199A8",borderDash:[5,5],pointRadius:0,yAxisID:"y1"}
+    ]},options:{scales:{
+      y:{type:"linear",position:"left",beginAtZero:true},
+      y1:{type:"linear",position:"right",min:0,max:100,grid:{drawOnChartArea:false}},
+      x:{ticks:{maxRotation:60,minRotation:30,font:{size:9}}}
+    }}});
+
+  /* Embudo bot */
+  const bf=document.getElementById("an-funnel");
+  const steps=[{l:"Bot activo",v:A.bot.activo,c:"#B5D4F4"},{l:"Bot asistido",v:A.bot.asistido,c:"#378ADD"},{l:"Bot resuelto",v:A.bot.resuelto,c:"#EF4444"}];
+  const maxV=steps[0].v;
+  bf.innerHTML=steps.map(s=>`<div class="an-funnel-row"><div class="an-funnel-lbl">${s.l}</div>
+    <div class="an-funnel-bar" style="width:${Math.max(2,s.v/maxV*100)}%;background:${s.c}"></div>
+    <div class="an-funnel-val">${s.v.toLocaleString("es-AR")} (${(s.v/maxV*100).toFixed(0)}%)</div></div>`).join("");
+
+  /* Chart 10: sucursales */
+  new Chart(document.getElementById("chart-sucursales"),{type:"bar",data:{
+    labels:A.sucursales.map(s=>s.suc),datasets:[{data:A.sucursales.map(s=>s.n),backgroundColor:"#CECBF6",hideLabels:false}]},
+    options:{indexAxis:"y",plugins:{legend:{display:false},endLabel:{labels:A.sucursales.map(s=>s.n)}},scales:{x:{beginAtZero:true}}},
+    plugins:[endLabelPlugin]});
+
+  /* Chart 11: mensajes y HT por categoría */
+  new Chart(document.getElementById("chart-msgcat"),{data:{labels:A.msg_cat.map(c=>c.cat),
+    datasets:[
+      {type:"bar",label:"Mensajes prom.",data:A.msg_cat.map(c=>c.avg_msg),backgroundColor:"#B5D4F4",yAxisID:"y"},
+      {type:"line",label:"HT prom. (min)",data:A.msg_cat.map(c=>c.avg_ht),borderColor:"#D85A30",yAxisID:"y1",tension:.2,pointRadius:4}
+    ]},options:{scales:{
+      y:{type:"linear",position:"left",beginAtZero:true},
+      y1:{type:"linear",position:"right",beginAtZero:true,grid:{drawOnChartArea:false}}
+    }}});
 }
 
 /* ── INIT ── */
