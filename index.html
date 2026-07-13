@@ -9,7 +9,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#EEF1F5;min-height:100vh}
-:root{--brand:#3ECDB0;--brand-d:#29A88E;--dark:#4A4F5C;--surface-1:#fff;--border:#E0E3E8;}
+:root{--brand:#3ECDB0;--brand-d:#29A88E;--dark:#4A4F5C;--surface-0:#EEF1F5;--surface-1:#fff;--surface-2:#F8FAFB;--border:#E0E3E8;--text-primary:#2D3142;--text-secondary:#8A92A6;--text-muted:#B0B8C4;}
 
 /* HEADER */
 .hdr{background:var(--dark);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:40;height:52px}
@@ -22,8 +22,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;ba
 .gear{background:none;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;color:#fff;width:30px;height:30px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:.15s}
 .gear:hover{background:rgba(255,255,255,.12)}
 
-/* VIEW TABS */
+/* DASHBOARD */
 .main{padding:10px 12px}
+.dash{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.dash-card{padding:12px 14px;border-right:0.5px solid var(--border)}
+.dash-card:last-child{border-right:none}
+.dash-ic{font-size:16px;margin-bottom:4px}
+.dash-val{font-size:22px;font-weight:500;color:var(--text-primary);line-height:1.2}
+.dash-lbl{font-size:10px;color:var(--text-secondary);margin-top:2px}
+.dash-sub{font-size:9px;color:var(--text-muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* VIEW TABS */
 .vtabs{display:flex;gap:6px;margin-bottom:8px;background:#fff;border-radius:10px;padding:5px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .vtab{flex:1;background:none;border:none;border-radius:7px;padding:8px;cursor:pointer;font-size:12px;font-weight:600;color:#8A92A6;transition:.15s}
 .vtab:hover{background:#F0F2F5}
@@ -92,6 +101,31 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 
 /* DAY SEPARATOR */
 .day-sep{border-left:2px solid #AAAAAA !important}
+
+/* WEEK SWIMLANE */
+.wk-axis{display:flex;margin-left:132px;margin-bottom:6px}
+.wk-tick{flex:1;font-size:9px;font-family:monospace;color:var(--text-secondary)}
+.wk-tick.now{color:var(--brand);font-weight:500}
+.wk-day{display:flex;border-radius:10px;border:0.5px solid var(--border);margin-bottom:10px;overflow:hidden;background:var(--surface-1)}
+.wk-day.today{border:2px solid var(--brand)}
+.wk-daycol{width:62px;min-width:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;background:#E1F5EE;color:#085041}
+.wk-daycol.wke{background:#EEEDFE;color:#3C3489}
+.wk-daycol.today{background:var(--brand);color:#fff}
+.wk-daycol .dn{font-size:11px;font-weight:700}
+.wk-daycol .dd{font-size:13px;font-weight:600;margin-top:2px}
+.wk-daycol .badge{font-size:8px;background:rgba(255,255,255,.35);border-radius:99px;padding:1px 6px;margin-top:4px}
+.wk-body{flex:1;padding:8px 10px;min-width:0}
+.wk-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.wk-pill{width:62px;min-width:62px;height:26px;border-radius:5px;font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;border:1px solid;text-align:center}
+.wk-track{position:relative;flex:1;height:26px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.wk-hourline{position:absolute;top:0;bottom:0;border-left:0.5px solid var(--border)}
+.wk-nowline{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--brand);z-index:5}
+.wk-bar{position:absolute;top:1px;bottom:1px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;overflow:hidden;white-space:nowrap;border:1px solid}
+.wk-off{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-style:italic;color:#A0A8B4}
+.wk-breaks{display:flex;flex-wrap:wrap;gap:6px;border-top:0.5px solid var(--border);margin-top:8px;padding-top:8px}
+.wk-brkpill{display:inline-flex;align-items:center;height:28px;border-radius:99px;padding:0 12px;gap:4px;font-size:11px;font-weight:500;color:#412402;white-space:nowrap}
+.wk-brkpill.m2{background:#EF9F27;border:1px solid #854F0B}
+.wk-brkpill.m1{background:#FAC775;border:1px solid #BA7517}
 
 /* BREAK COLUMN */
 .th-break,.td-break{width:52px;min-width:52px}
@@ -203,6 +237,12 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
 </header>
 
 <div class="main">
+  <div class="dash">
+    <div class="dash-card"><div class="dash-ic" style="color:#3ECDB0">&#128101;</div><div class="dash-val" id="dash-active-val">0</div><div class="dash-lbl">Activos ahora</div><div class="dash-sub" id="dash-active-sub"></div></div>
+    <div class="dash-card"><div class="dash-ic" style="color:#378ADD">&#128202;</div><div class="dash-val">459</div><div class="dash-lbl">Casos prom/sem</div><div class="dash-sub">Pico: sáb 17-20h</div></div>
+    <div class="dash-card"><div class="dash-ic" style="color:#D85A30">&#128293;</div><div class="dash-val">18-19h</div><div class="dash-lbl">Hora pico histórica</div><div class="dash-sub">11.7% del volumen diario</div></div>
+    <div class="dash-card"><div class="dash-ic" style="color:#BA7517">&#9749;</div><div class="dash-val" id="dash-brk-val">0</div><div class="dash-lbl">Ventanas hoy</div><div class="dash-sub" id="dash-brk-sub"></div></div>
+  </div>
   <div class="vtabs">
     <button class="vtab" id="vtab-day" onclick="setView('day')">Día</button>
     <button class="vtab" id="vtab-week" onclick="setView('week')">Semana</button>
@@ -215,12 +255,16 @@ tr.now .td-p.tod-col.on{animation:pulse 1.8s ease-in-out infinite}
     <button class="nb" onclick="navNext()">&#8250;</button>
   </div>
   <div class="gw" id="gridWrap"><table class="sg"><thead id="sg-h"></thead><tbody id="sg-b"></tbody></table></div>
+  <div id="weekSwim" style="display:none">
+    <div class="wk-axis" id="wk-axis"></div>
+    <div id="wk-days"></div>
+  </div>
   <div id="monthWrap" style="display:none">
     <div class="mgrid-wk"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
     <div class="mgrid" id="mgrid"></div>
   </div>
   <div class="legend" id="leg"></div>
-  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-04.8</div>
+  <div class="foot">Fila amarilla = hora actual &middot; Columna resaltada = hoy &middot; Pulso = persona activa ahora &middot; v2026-07-13.1</div>
 </div>
 
 <div class="info-box">
@@ -394,6 +438,7 @@ const COLORS={
   Martina:["FAC775","633806"],
   Victoria:["CECBF6","3C3489"],
 };
+const BORDERS={Ana:"378ADD",Franco:"D85A30",Yazmin:"639922",Martina:"BA7517",Victoria:"7F77DD"};
 const SOPTS_SEED=[
   {v:"8-14",l:"08:00-14:00"},{v:"8-17",l:"08:00-17:00"},
   {v:"9-17",l:"09:00-17:00"},{v:"9-18",l:"09:00-18:00"},{v:"9-19",l:"09:00-19:00"},
@@ -461,6 +506,18 @@ function tick(){
   document.getElementById("clock-d").textContent=`${DAYS_L[dow(now)].substring(0,3)}, ${now.getDate()} ${MONTHS[now.getMonth()].substring(0,3)}`;
 }
 
+/* ── DASHBOARD ── */
+function renderDash(){
+  const dw=dow(now), h=now.getHours();
+  const sch=effSchedule(wkMon(now));
+  const active=ORDER.filter(p=>shHrs(sch[p][dw]).has(h));
+  document.getElementById("dash-active-val").textContent=active.length;
+  document.getElementById("dash-active-sub").textContent=active.length?active.join(", "):"Fuera de horario";
+  const wins=BREAKS[dw]||[];
+  document.getElementById("dash-brk-val").textContent=wins.length;
+  document.getElementById("dash-brk-sub").textContent=wins.length?wins.map(w=>`${w.l} ${hDec2hhmm(w.s)}`).join(" · "):"Sin ventanas hoy";
+}
+
 /* ── FIREBASE ── */
 const firebaseConfig={
   apiKey:"AIzaSyBXNHvBxWnA2KWG7uQhFEMfvP8CH6DQ_Jc",
@@ -484,7 +541,7 @@ function loadCfg(){
     snap.forEach(doc=>{w[doc.id]=doc.data();});
     WEEKS=w;
     weeksSynced=true;
-    renderGrid();
+    renderGrid();renderDash();
   },err=>{console.error("Firestore error:",err);});
 }
 
@@ -521,7 +578,7 @@ function loadBreaks(){
   breaksDoc.onSnapshot(snap=>{
     BREAKS=snap.exists?snap.data():JSON.parse(JSON.stringify(BREAK_DEFAULTS));
     breaksSynced=true;
-    renderGrid();
+    renderGrid();renderDash();
   },err=>{console.error("Firestore error:",err);});
 }
 
@@ -575,7 +632,8 @@ function setView(v){
   document.getElementById("vtab-day").className="vtab"+(v==="day"?" on":"");
   document.getElementById("vtab-week").className="vtab"+(v==="week"?" on":"");
   document.getElementById("vtab-month").className="vtab"+(v==="month"?" on":"");
-  document.getElementById("gridWrap").style.display=v==="month"?"none":"";
+  document.getElementById("gridWrap").style.display=v==="day"?"":"none";
+  document.getElementById("weekSwim").style.display=v==="week"?"":"none";
   document.getElementById("monthWrap").style.display=v==="month"?"":"none";
   document.getElementById("leg").style.display=v==="month"?"none":"";
   renderGrid();
@@ -602,12 +660,13 @@ function renderGrid(){
   else renderWeek();
 }
 
-/* ── RENDER WEEK ── */
+/* ── RENDER WEEK (swimlane) ── */
+const WK_AXIS_START=9, WK_AXIS_END=22, WK_AXIS_SPAN=WK_AXIS_END-WK_AXIS_START;
 function renderWeek(){
   const wkEnd=new Date(wkStart);wkEnd.setDate(wkStart.getDate()+6);
   const isThisWk=now>=wkStart&&now<=wkEnd;
   const todayDow=dow(now);
-  const curH=now.getHours();
+  const curH=now.getHours()+now.getMinutes()/60;
 
   document.getElementById("wlbl").textContent=
     `${wkStart.getDate()} al ${wkEnd.getDate()} de ${MONTHS[wkEnd.getMonth()]} de ${wkEnd.getFullYear()}`;
@@ -615,92 +674,88 @@ function renderWeek(){
   document.getElementById("btn-hoy").style.display=isThisWk?"none":"";
 
   const sch=effSchedule(wkStart);
-  // Build week structure: array of {date, dow, workers}
   const wdays=Array.from({length:7},(_,i)=>{
     const d=new Date(wkStart);d.setDate(wkStart.getDate()+i);
     return{date:d, dow:i, workers:workersOn(sch,i)};
   });
 
-  /* ── THEAD ── */
-  const head=document.getElementById("sg-h");
-  head.innerHTML="";
+  /* ── EJE DE TIEMPO ── */
+  const axis=document.getElementById("wk-axis");axis.innerHTML="";
+  for(let h=WK_AXIS_START;h<=WK_AXIS_END;h++){
+    const isNowTick=isThisWk&&h===Math.floor(curH);
+    const t=document.createElement("div");
+    t.className="wk-tick"+(isNowTick?" now":"");
+    t.textContent=`${h}h`;
+    axis.appendChild(t);
+  }
 
-  // Row 1: Horario (rowspan=2) + day names
-  const r1=document.createElement("tr");
-  const th0=document.createElement("th");
-  th0.rowSpan=2;th0.className="th-t";th0.textContent="Horario";r1.appendChild(th0);
-
-  wdays.forEach(({date,dow:d,workers},wi)=>{
-    if(!workers.length)return;
+  /* ── DÍAS ── */
+  const daysWrap=document.getElementById("wk-days");daysWrap.innerHTML="";
+  wdays.forEach(({date,dow:d,workers})=>{
     const isT=isThisWk&&d===todayDow;
     const fer=FERIADOS[dk(date)];
-    const th=document.createElement("th");
-    th.colSpan=workers.length+1;
-    th.className="th-day"+(isT?" tod":d>=5?" wke":" wkd")+(fer?" fer":"");
-    if(wi>0)th.style.borderLeft="2px solid rgba(255,255,255,.5)";
-    th.innerHTML=`<div class="dn">${DAYS_L[d]}&nbsp;${date.getDate()}/${date.getMonth()+1}${fer?" ⚑":""}</div>`;
-    r1.appendChild(th);
-  });
-  head.appendChild(r1);
+    const dayEl=document.createElement("div");
+    dayEl.className="wk-day"+(isT?" today":"");
 
-  // Row 2: person sub-headers (siempre las 5 personas, mismo orden todos los días) + Break
-  const r2=document.createElement("tr");
-  wdays.forEach(({date,dow:d,workers},wi)=>{
-    workers.forEach(({p,sh},pi)=>{
-      const[bg,tc]=COLORS[p];
-      const isT=isThisWk&&d===todayDow;
-      const th=document.createElement("th");
-      th.className="th-p"+(isT?" tod-col":"")+(sh?"":" off");
-      if(sh){th.style.background=`#${bg}`;th.style.color=`#${tc}`;}
-      th.textContent=p;
-      if(pi===0&&wi>0)th.style.borderLeft="2px solid #AAAAAA";
-      r2.appendChild(th);
+    const col=document.createElement("div");
+    col.className="wk-daycol"+(isT?" today":d>=5?" wke":"");
+    col.innerHTML=`<div class="dn">${DAYS_L[d].substring(0,3)}</div><div class="dd">${date.getDate()}/${date.getMonth()+1}</div>`+
+      (isT?`<div class="badge">hoy</div>`:"")+(fer?`<div class="badge">⚑</div>`:"");
+    dayEl.appendChild(col);
+
+    const bodyEl=document.createElement("div");bodyEl.className="wk-body";
+
+    workers.forEach(({p,sh})=>{
+      const[bg,tc]=COLORS[p];const bd=BORDERS[p];
+      const row=document.createElement("div");row.className="wk-row";
+      const pill=document.createElement("div");
+      pill.className="wk-pill";
+      pill.style.background=`#${bg}`;pill.style.color=`#${tc}`;pill.style.borderColor=`#${bd}`;
+      pill.textContent=p;
+      row.appendChild(pill);
+
+      const track=document.createElement("div");track.className="wk-track";
+      for(let h=WK_AXIS_START+1;h<WK_AXIS_END;h++){
+        const line=document.createElement("div");line.className="wk-hourline";
+        line.style.left=`${((h-WK_AXIS_START)/WK_AXIS_SPAN*100)}%`;
+        track.appendChild(line);
+      }
+      if(isT&&curH>=WK_AXIS_START&&curH<=WK_AXIS_END){
+        const nl=document.createElement("div");nl.className="wk-nowline";
+        nl.style.left=`${((curH-WK_AXIS_START)/WK_AXIS_SPAN*100)}%`;
+        track.appendChild(nl);
+      }
+      if(sh){
+        const[a,b]=sh.split("-").map(Number);
+        const s=Math.max(a,WK_AXIS_START), e=Math.min(b,WK_AXIS_END);
+        const bar=document.createElement("div");bar.className="wk-bar";
+        bar.style.left=`${((s-WK_AXIS_START)/WK_AXIS_SPAN*100)}%`;
+        bar.style.width=`${((e-s)/WK_AXIS_SPAN*100)}%`;
+        bar.style.background=`#${bg}`;bar.style.color=`#${tc}`;bar.style.borderColor=`#${bd}`;
+        bar.textContent=`${pad(a)}:00–${pad(b)}:00`;
+        track.appendChild(bar);
+      }else{
+        const off=document.createElement("div");off.className="wk-off";off.textContent="Franco";
+        track.appendChild(off);
+      }
+      row.appendChild(track);
+      bodyEl.appendChild(row);
     });
-    const thBrk=document.createElement("th");
-    thBrk.className="th-p th-break";
-    thBrk.textContent="☕ Break";
-    r2.appendChild(thBrk);
-  });
-  head.appendChild(r2);
 
-  /* ── TBODY ── */
-  const body=document.getElementById("sg-b");
-  body.innerHTML="";
-
-  TIMES.forEach(({h,label})=>{
-    const isNow=isThisWk&&h===curH;
-    const tr=document.createElement("tr");
-    if(isNow)tr.className="now";
-
-    // Time cell
-    const td0=document.createElement("td");
-    td0.className="td-t";td0.textContent=label;tr.appendChild(td0);
-
-    // Person cells + Break
-    wdays.forEach(({date,dow:d,workers},wi)=>{
-      workers.forEach(({p,sh},pi)=>{
-        const[bg,tc]=COLORS[p];
-        const isT=isThisWk&&d===todayDow;
-        const isOn=shHrs(sh).has(h);
-        const isLive=isNow&&isT&&isOn;
-        const td=document.createElement("td");
-        td.className="td-p"+(isT?" tod-col":"")+(isOn?" on":sh?" offhour":"");
-        if(isOn){
-          td.style.background=`#${bg}`;
-          td.style.color=`#${tc}`;
-          td.textContent=p;
-          if(isLive)td.style.outline=`1.5px solid #${tc}`;
-        }
-        if(pi===0&&wi>0)td.style.borderLeft="2px solid #AAAAAA";
-        tr.appendChild(td);
+    const wins=BREAKS[d]||[];
+    if(wins.length){
+      const brkWrap=document.createElement("div");brkWrap.className="wk-breaks";
+      wins.forEach(w=>{
+        const pill=document.createElement("div");
+        pill.className="wk-brkpill "+(w.m>=2?"m2":"m1");
+        pill.innerHTML=`&#9749; Vent. ${w.l} &nbsp;${hDec2hhmm(w.s)}–${hDec2hhmm(w.s+0.5)} · máx ${w.m}`;
+        brkWrap.appendChild(pill);
       });
-      const win=breakForHour(d,h);
-      const tdB=document.createElement("td");
-      tdB.className="td-break"+(win?(win.m>=2?" brk2":" brk1"):"");
-      if(win)tdB.innerHTML=`<div class="bl">Vent. ${win.l}</div><div class="bm">máx ${win.m} pers.</div>`;
-      tr.appendChild(tdB);
-    });
-    body.appendChild(tr);
+      bodyEl.appendChild(brkWrap);
+    }
+
+    dayEl.appendChild(bodyEl);
+    daysWrap.appendChild(dayEl);
   });
 
   /* ── LEGEND ── */
@@ -1089,8 +1144,8 @@ function removeTurno(v){
 }
 
 /* ── INIT ── */
-setView("week");loadCfg();loadTurnos();loadBreaks();loadInfo();tick();
-setInterval(()=>{tick();renderGrid();},30000);
+setView("week");loadCfg();loadTurnos();loadBreaks();loadInfo();tick();renderDash();
+setInterval(()=>{tick();renderGrid();renderDash();},30000);
 </script>
 </body>
 </html>
